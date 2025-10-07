@@ -1,9 +1,9 @@
 
 import numpy as np 
-from pyta2.base.indicator import rIndicator 
-from pyta2.trend.ma.ema import rEMA 
-from pyta2.utils.space.box import Box 
-from pyta2.utils.deque.numpy_deque import NumpyDeque 
+from ..base import rIndicator 
+from ..trend.ma.ema import rEMA 
+from ..utils.space.box import Box, Scalar 
+from ..utils.deque.numpy_deque import NumpyDeque 
 
 class rMACD(rIndicator):
     '''MACD
@@ -22,10 +22,10 @@ class rMACD(rIndicator):
             n2: 快速EMA周期
             n3: 差值EMA周期
         """
-        if n1 < 1 or n2 < 1 or n3 < 1:
-            raise ValueError(f'{self.name} n1, n2, n3 must be greater than 0, got {n1}, {n2}, {n3}')
-        if n1 <= n2:
-            raise ValueError(f'{self.name} n1 must be greater than n2, got {n1}, {n2}')
+        assert n1 > 0, f'{self.name} n1 must be greater than 0, got {n1}'
+        assert n2 > 0, f'{self.name} n2 must be greater than 0, got {n2}'
+        assert n3 > 0, f'{self.name} n3 must be greater than 0, got {n3}'
+        assert n1 > n2, f'{self.name} n1 must be greater than n2, got {n1}, {n2}'
         
         self.n1 = n1
         self.n2 = n2
@@ -37,9 +37,9 @@ class rMACD(rIndicator):
         
         # 使用新的Schema格式 - 直接传递字典
         schema = {
-            'dif': Box(low=-np.inf, high=np.inf, shape=(), dtype=np.float64),
-            'dea': Box(low=-np.inf, high=np.inf, shape=(), dtype=np.float64),
-            'bar': Box(low=-np.inf, high=np.inf, shape=(), dtype=np.float64)
+            'dif': Scalar(low=-np.inf, high=np.inf),
+            'dea': Scalar(low=-np.inf, high=np.inf),
+            'bar': Scalar(low=-np.inf, high=np.inf)
         }
         
         super(rMACD, self).__init__(

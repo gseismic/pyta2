@@ -4,20 +4,16 @@
 class MovingVector(object):
     """
     [@2021-07-21 23:38:59] cc
-    """
-    def __init__(self):
-        self._discard_end = 0
-        self._values = []
-        self._notional_len = 0
-    
-    def clear(self):
-        self._discard_end = 0
-        self._values = []
-        self._notional_len = 0
+    q = NumPyVector(100) 
+    """ 
+    def __init__(self): 
+        self._discard_end = 0 
+        self._values = [] 
+        self._notional_len = 0 
 
-    def append(self, value):
-        self._notional_len += 1
-        self._values.append(value)
+    def append(self, value): 
+        self._notional_len += 1 
+        self._values.append(value) 
 
     def rekeep_n(self, n):
         '''只保留最近的n个点的数据, 其余丢弃'''

@@ -6,7 +6,7 @@ setup(
     version='0.0.1',
     packages=find_packages(),
     description='Technical Indicator Lib for stream financial data',
-    install_requires = ['numpy', 'polars', 'matplotlib'],
+    install_requires = ['numpy', 'polars', 'matplotlib', 'chineseize_matplotlib'],
     scripts=[],
     python_requires = '>=3',
     include_package_data=True,

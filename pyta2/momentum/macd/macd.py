@@ -1,9 +1,9 @@
 
 import numpy as np 
-from ..base import rIndicator 
-from ..trend.ma.ema import rEMA 
-from ..utils.space.box import Box, Scalar 
-from ..utils.deque.numpy_deque import NumpyDeque 
+from ...base import rIndicator 
+from ...trend.ma.ema import rEMA 
+from ...utils.space.box import Box, Scalar 
+from ...utils.deque.numpy_deque import NumpyDeque 
 
 class rMACD(rIndicator):
     '''MACD

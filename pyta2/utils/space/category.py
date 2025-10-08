@@ -2,7 +2,7 @@ import numpy as np
 from .base import Space
 
 
-class Cat(Space):
+class Category(Space):
     """
     用于表示分类变量的空间，支持任意类型的离散值
     """
@@ -67,36 +67,36 @@ class Cat(Space):
         return self._reverse_map[idx]
     
     def __repr__(self):
-        return f"Cat(cats={self.cats}, dtype={self.dtype})"
+        return f"Category(cats={self.cats}, dtype={self.dtype})"
     
     def __eq__(self, other):
-        return isinstance(other, Cat) and self.cats == other.cats
+        return isinstance(other, Category) and self.categories == other.categories
     
     def to_json(self):
         """序列化为JSON格式"""
         return {
             "type": "Cat",
-            "cats": list(self.cats),
+            "categories": list(self.categories),
             "dtype": self.dtype,
         }
     
     @classmethod
     def from_json(cls, data):
         """从JSON反序列化"""
-        return cls(cats=data["cats"], dtype=data["dtype"])
+        return cls(categories=data["categories"], dtype=data["dtype"])
     
-class Bool(Cat):
+class Bool(Category):
     def __init__(self):
         super().__init__([True, False])
     
     def __repr__(self):
         return f"Bool()"
 
-class Sign(Cat):
+class Sign(Category):
     def __init__(self):
         super().__init__([-1, 0, 1])
     
     def __repr__(self):
         return f"Sign()"
 
-__all__ = ['Cat', 'Bool', 'Sign']
+__all__ = ['Category', 'Bool', 'Sign']

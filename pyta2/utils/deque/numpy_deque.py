@@ -12,6 +12,7 @@ class NumpyDeque(object):
     ChangeLog:
         - [@2025-09-19] fix `push`
         - [@2025-09-19] 优化 __getitem__ and __setitem__
+        - [@2025-10-08] add is_empty and is_full
     """
     default_maxlen = int(1e8)
     def __init__(self, maxlen, dtype=np.float64, buffer_factor=None):
@@ -37,6 +38,12 @@ class NumpyDeque(object):
             return 2.0
         else:
             return 3.0 
+    
+    def is_empty(self):
+        return self._end_idx == self._start_idx
+    
+    def is_full(self):
+        return self._end_idx - self._start_idx == self._maxlen
 
     def append(self, value):
         self.push(value)
@@ -273,8 +280,10 @@ class NumpyDeque(object):
     def __repr__(self):
         return f"NumPyDeque({self.values.tolist()})"
 
+
 NumPyDeque = NumpyDeque
 
+# benchmark
 def benchmark(n=1000000, size=100000):
     import time, random
     q = NumpyDeque(size)

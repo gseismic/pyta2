@@ -1,7 +1,7 @@
 import numpy as np
-from pyta2.base.indicator import rIndicator
-from pyta2.utils.space.box import Box
 from abc import abstractmethod
+from ...base.indicator import rIndicator
+from ...utils.space.box import Box
 
 class rBaseMA(rIndicator):
     

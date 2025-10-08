@@ -15,14 +15,14 @@ class rHMA(rBaseMA):
     name = "HMA"
 
     def __init__(self, n, **kwargs):
-        assert n > 0, f'{self.name} n must be greater than 0, got {n}'
+        assert n > 1, f'{self.name} n must be greater than 0, got {n}'
         self.n1 = n//2
         self.n2 = int(np.sqrt(n))
         self.fn_wma1 = rWMA(self.n1)
-        self.fn_wma2 = rWMA(self.n)
+        self.fn_wma2 = rWMA(n)
         self.fn_wma3 = rWMA(self.n2)
         self.__raw_hma = NumpyDeque(n)
-        window = max(self.n1 - 1, self.n - 1) + self.n2
+        window = max(self.n1 - 1, n - 1) + self.n2
         super(rHMA, self).__init__(n=n, window=window, **kwargs)
     
     def reset_extras(self):

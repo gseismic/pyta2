@@ -11,6 +11,7 @@ class rTEMA(rBaseMA):
 
     reference:
         https://en.wikipedia.org/wiki/Triple_exponential_moving_average
+        [TEMA信号](https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-overlays/triple-exponential-moving-average-tema)
     """
     name = "TEMA"
 

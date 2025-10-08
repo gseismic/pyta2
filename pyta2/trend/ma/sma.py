@@ -12,4 +12,6 @@ class rSMA(rBaseMA):
         pass
     
     def forward(self, values):
+        if len(values) < self.n:
+            return np.nan
         return np.mean(values[-self.n:])

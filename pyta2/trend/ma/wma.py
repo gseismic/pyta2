@@ -14,4 +14,6 @@ class rWMA(rBaseMA):
         pass
 
     def forward(self, values):
+        if len(values) < self.n:
+            return np.nan
         return np.dot(values[-self.n:], self._weights)

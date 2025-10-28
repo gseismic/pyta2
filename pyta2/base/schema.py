@@ -6,7 +6,7 @@ class Schema:
     def __init__(self, 
                  schema: Union[List[Tuple[str, Space]], OrderedDict[str, Space]]
                  ):
-        """
+        """ 
         Args:
             schema: 字段名和空间定义
         Example1:

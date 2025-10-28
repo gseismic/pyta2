@@ -26,10 +26,18 @@ class Box(Space):
     >>> print(space.contains(sample))
     True
     """
-    def __init__(self, low, high, shape=None, dtype=np.float64):
-        # 统一为ndarray并验证形状
+    def __init__(self, low, high, shape=None, dtype=np.float64, null_value=None):
         self.low = np.asarray(low, dtype=dtype)
         self.high = np.asarray(high, dtype=dtype)
+        if null_value is not None:
+                self.null_value = null_value
+        else:
+            if dtype in [np.float64, np.float32]:
+                self.null_value = np.nan
+            elif dtype in [np.int32, np.int64]:
+                self.null_value = -999999
+            else:
+                self.null_value = None
         
         # 验证边界
         if np.any(self.low > self.high):
@@ -60,6 +68,21 @@ class Box(Space):
             np.all(x >= self.low) and 
             np.all(x <= self.high)
         )
+    
+    def is_null(self, x):
+        """检查给定值是否为null值"""
+        x = np.asarray(x, dtype=self.dtype)
+        if self.null_value is None:
+            return False
+        return np.isnan(x) if (np.isnan(self.null_value) and np.issubdtype(self.dtype, np.floating)) else np.equal(x, self.null_value)
+    
+    def set_null_value(self, null_value):
+        """设置新的null值"""
+        self.null_value = null_value
+    
+    def get_null_value(self):
+        """获取当前的null值"""
+        return self.null_value
 
     def __repr__(self):
         return (f"Box(low={self.low}, high={self.high}, "

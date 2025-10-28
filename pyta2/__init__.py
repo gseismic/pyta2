@@ -1,4 +1,4 @@
-# from .trend import *
+from .trend import *
 # from .momentum import *
 # from .volume import *
 # from .structure import *

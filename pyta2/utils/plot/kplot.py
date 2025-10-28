@@ -123,6 +123,11 @@ def kplot(ax: plt.Axes,
           date_formatter: Optional[str] = None, 
           rotate_date: bool = True,
           volume_yticklabel_off: bool = False, 
+          title: Optional[str] = None,
+          ylabel: Optional[str] = None,
+          xlabel: Optional[str] = None,
+          yscale: Optional[str] = None,
+          xscale: Optional[str] = None,
           grid: bool = False) -> Optional[plt.Axes]:
     """
     绘制K线图（蜡烛图）
@@ -196,6 +201,13 @@ def kplot(ax: plt.Axes,
     ylim = [_min - _span * 0.25, _max + _span * 0.03]
     ax.set_ylim(ylim[0], ylim[1])
     ax.grid(grid)
+    
+    if title is not None:
+        ax.set_title(title)
+    if ylabel is not None:
+        ax.set_ylabel(ylabel)
+    if xlabel is not None:
+        ax.set_xlabel(xlabel)
 
     # 处理成交量
     if volumes is not None:

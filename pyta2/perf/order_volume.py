@@ -26,7 +26,7 @@ class rOrderVolumePerf(rIndicator):
         self._acc_fee = 0
         self._acc_pnl = 0
         
-        # 使用新的Schema格式 - 直接传递字典
+        # 使用新的Schema格式 - 直接传递字典 
         schema = {
             'acc_pnl': Scalar(low=-np.inf, high=np.inf),
             'acc_fee': Scalar(low=0, high=np.inf)

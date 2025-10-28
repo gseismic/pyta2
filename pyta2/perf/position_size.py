@@ -10,13 +10,14 @@ class rPositionSizePerf(rIndicator):
     '''
     name = "PositionSizePerf"
 
-    def __init__(self, fee_rate, **kwargs):
+    def __init__(self, fee_rate, initial_position=0.0, **kwargs):
         """
         Args:
             fee_rate: 手续费率
         """
         assert 0 <= fee_rate <= 1.0, f'{self.name} fee_rate must be between 0 and 1, got {fee_rate}'
-        
+        assert initial_position >= 0.0, f'{self.name} initial_position must be non-negative, got {initial_position}'
+        self.initial_position = initial_position
         self._order_volume_perf = rOrderVolumePerf(fee_rate)
         self._order_volumes = NumpyDeque(maxlen=2, dtype=np.float64)
         
@@ -43,7 +44,7 @@ class rPositionSizePerf(rIndicator):
             - position_sizes: 每个价格点的持仓数量
         '''
         if len(prices) == 1:
-            qty = position_sizes[-1] - 0.0
+            qty = position_sizes[-1] - self.initial_position
         else:
             qty = position_sizes[-1] - position_sizes[-2]
 

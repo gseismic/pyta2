@@ -2,6 +2,20 @@
 常见技术指标滚动计算 基于numpy,polars,matplotlib
 定位：规范化无冗余的pyta库 
 
+## 指标列表
+- trend
+    - ma
+        - SMA
+        - EMA
+        - WMA
+        - HMA
+        - DEMA
+        - TEMA
+- perf
+    - PositionSizePerf
+    - OrderVolumePerf
+
+
 ## 设计原则
 **性能优先**
 **极简设计**

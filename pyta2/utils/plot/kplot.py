@@ -98,9 +98,14 @@ def kplot(ax: plt.Axes,
           title: Optional[str] = None,
           ylabel: Optional[str] = None,
           xlabel: Optional[str] = None,
-          yscale: Optional[str] = None,
-          xscale: Optional[str] = None,
-          grid: bool = False) -> Optional[plt.Axes]:
+          grid: bool = False,
+          vlines: Optional[Union[np.ndarray, list]] = None,
+          hlines: Optional[Union[np.ndarray, list]] = None,
+          line_color: str = 'gray',
+          line_style: str = '--',
+          use_cursor: bool = False,
+          cursor_horiz: bool = True,
+          cursor_vert: bool = True) -> Optional[plt.Axes]:
     """
     绘制K线图（蜡烛图）
     
@@ -166,6 +171,15 @@ def kplot(ax: plt.Axes,
     candlestick2_ohlc(ax, _opens, _highs, _lows, _closes, dates=dates,
                      width=width, alpha=alpha, colorup=colorup, colordown=colordown)
     
+    # 绘制垂直和水平参考线
+    if vlines is not None:
+        for x in vlines:
+            ax.axvline(x=x, color=line_color, linestyle=line_style, alpha=0.5, lw=0.8)
+    
+    if hlines is not None:
+        for y in hlines:
+            ax.axhline(y=y, color=line_color, linestyle=line_style, alpha=0.5, lw=0.8)
+    
     # 设置价格轴范围
     _max = np.nanmax(_highs) 
     _min = np.nanmin(_lows) 
@@ -213,6 +227,21 @@ def kplot(ax: plt.Axes,
         ax.xaxis.set_major_formatter(mdates.DateFormatter(date_formatter))
         if rotate_date:
             plt.gcf().autofmt_xdate()
+
+    # 处理光标十字线 (Crosshair)
+    if use_cursor:
+        from matplotlib.widgets import MultiCursor
+        fig = ax.get_figure()
+        # 收集所有相关的 axes 以便十字线能跨越它们
+        cursor_axes = [ax]
+        if volume_ax is not None:
+            cursor_axes.append(volume_ax)
+        
+        # 将 MultiCursor 实例挂载到 fig 上，防止被垃圾回收
+        # 默认使用红色的虚线，并设置透明度为 0.5
+        fig.cursor = MultiCursor(fig.canvas, cursor_axes, color='r', lw=0.8, 
+                                horizOn=cursor_horiz, vertOn=cursor_vert,
+                                linestyle='--', alpha=0.5)
 
     return volume_ax
 

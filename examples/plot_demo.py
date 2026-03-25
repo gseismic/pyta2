@@ -39,14 +39,23 @@ def demo_kplot():
         'volume': volume
     })
     
-    # 2. 绘制
+    # 2. 绘制 (增加参考线演示)
     fig, ax = plt.subplots(figsize=(14, 8))
+    
+    # 模拟一些参考线：比如最近的价格波动高低点
+    h_lines = [df['high'].max(), df['low'].min()]
+    # 比如在第 50 个数据点画垂直线
+    v_lines = [df['date'].iloc[50]] if True else [50] 
+    
     v_ax = kplot_df(ax, df, 
                      show_volume=True, 
                      use_date=True,
-                     title="pyta2 Financial Plot Demo",
-                     ylabel="Price",
-                     grid=True)
+                     hlines=h_lines,
+                     vlines=v_lines,
+                     line_color='blue',
+                     use_cursor=True,
+                     title="pyta2 Financial Plot Demo (with Ref Lines & Cursor)",
+                     ylabel="Price")
     
     if v_ax:
         v_ax.set_ylabel("Volume")

@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from typing import Tuple, List, Union
+from typing import Tuple, List, Union, Any
 
 __all__ = ['get_figax', 'plt']
 
@@ -11,7 +11,7 @@ def get_figax(n_tx: int,
               right: float = 0.97, 
               top: float = 0.97, 
               bottom: float = 0.03,
-              tx_colors: List[str] = None) -> Tuple[plt.Figure, plt.Axes, ...]:
+              tx_colors: List[str] = None) -> Tuple[Any, ...]:
     """
     创建带有多个y轴的图表
     
@@ -52,11 +52,11 @@ def get_figax(n_tx: int,
         if i >= 1:
             tx.spines['right'].set_position(('outward', -offset * i))
         
-        # 设置轴颜色
-        if i < len(tx_colors):
-            tx.spines['right'].set_color(tx_colors[i])
-            tx.tick_params(axis='y', colors=tx_colors[i])
+        # 设置轴颜色 (使用取模运算防止颜色列表越界)
+        color = tx_colors[i % len(tx_colors)]
+        tx.spines['right'].set_color(color)
+        tx.tick_params(axis='y', colors=color)
         
         tx_list.append(tx)
 
-    return fig, ax, *tx_list
+    return (fig, ax, *tx_list)

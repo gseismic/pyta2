@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyta2"
+dynamic = ["version"]
+description = "Technical Indicator Lib for stream financial data"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [
+    { name = "Liu Shengli", email = "liushengli203@163.com" }
+]
+urls = { "Homepage" = "http://github.com/gseismic/pyta2" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "numpy",
+    "polars",
+    "matplotlib",
+    "chineseize_matplotlib",
+    "pandas",
+    "arrow",
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "pyta2.version.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pyta2*"]
+exclude = ["examples*", "tests*"]
+
+[tool.setuptools.package-data]
+"*" = ["*.py", "*.md", "*.txt"]

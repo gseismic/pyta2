@@ -25,62 +25,64 @@ __all__ = ['insert_zeros', 'wiggle_input_check', 'wiggle', 'optimized_wiggle',
 
 def insert_zeros(trace: np.ndarray, tt: Optional[np.ndarray] = None) -> Tuple[np.ndarray, np.ndarray]:
     """
-    在数据轨迹和tt向量中插入零位置，基于线性拟合
+    在数据轨迹和时间向量中插入零交叉点，以获得更平滑的填充效果。
     
-    Parameters:
-    -----------
-    trace : np.ndarray
-        数据轨迹
-    tt : np.ndarray, optional
-        时间向量，如果为None则自动生成
-        
-    Returns:
-    --------
-    tuple
-        (trace_zi, tt_zi) - 插入零后的轨迹和时间向量
+    使用预分配数组的优化版本，避免在循环中使用 np.hstack。
     """
     if tt is None:
         tt = np.arange(len(trace))
 
-    # 找到符号变化的点
+    # 找到符号变化的点 (sign change)
+    # 使用 np.signbit 处理 0 的情况更稳健
     zc_idx = np.where(np.diff(np.signbit(trace)))[0]
     
-    # 如果没有符号变化，直接返回原数据
     if len(zc_idx) == 0:
         return trace.copy(), tt.copy()
     
-    # 计算零交叉点
+    # 提取交叉点前后的数据层
     x1 = tt[zc_idx]
     x2 = tt[zc_idx + 1]
     y1 = trace[zc_idx]
     y2 = trace[zc_idx + 1]
     
-    # 避免除零错误
+    # 计算零交叉时间点: y = ax + b => 0 = a*tt_zero + b
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        a = (y2 - y1) / (x2 - x1)
-        # 过滤掉无效的零交叉点
-        valid_mask = np.isfinite(a) & (np.abs(a) > 1e-10)
-        if not np.any(valid_mask):
+        # 线性插值公式: tt_zero = x1 - y1 * (x2 - x1) / (y2 - y1)
+        denom = y2 - y1
+        valid = np.abs(denom) > 1e-12
+        
+        if not np.any(valid):
             return trace.copy(), tt.copy()
             
-        zc_idx = zc_idx[valid_mask]
-        x1 = x1[valid_mask]
-        y1 = y1[valid_mask]
-        a = a[valid_mask]
-        tt_zero = x1 - y1 / a
+        zc_idx = zc_idx[valid]
+        tt_zero = x1[valid] - y1[valid] * (x2[valid] - x1[valid]) / denom[valid]
 
-    # 分割tt和trace
-    tt_split = np.split(tt, zc_idx + 1)
-    trace_split = np.split(trace, zc_idx + 1)
-    tt_zi = tt_split[0].copy()
-    trace_zi = trace_split[0].copy()
-
-    # 插入零值
-    for i in range(len(tt_zero)):
-        tt_zi = np.hstack((tt_zi, np.array([tt_zero[i]]), tt_split[i + 1]))
-        trace_zi = np.hstack((trace_zi, np.zeros(1), trace_split[i + 1]))
-
+    # 预分配结果数组
+    n_original = len(trace)
+    n_zeros = len(zc_idx)
+    res_len = n_original + n_zeros
+    
+    trace_zi = np.empty(res_len, dtype=trace.dtype)
+    tt_zi = np.empty(res_len, dtype=tt.dtype)
+    
+    # 使用掩码填充新数组
+    # insert_pos 是每个零点在原始数组中的索引后的位置
+    insert_mask = np.zeros(res_len, dtype=bool)
+    # 原始数据在新数组中的索引
+    # 第 k 个零点前面有 zc_idx[k]+1 个原始点，且前面已经插入了 k 个零点
+    # 所以第 k 个零点在新数组的索引是 zc_idx[k] + 1 + k
+    zero_indices = zc_idx + 1 + np.arange(n_zeros)
+    insert_mask[zero_indices] = True
+    
+    # 填充插入的零值
+    trace_zi[insert_mask] = 0
+    tt_zi[insert_mask] = tt_zero
+    
+    # 填充原始值
+    trace_zi[~insert_mask] = trace
+    tt_zi[~insert_mask] = tt
+    
     return trace_zi, tt_zi
 
 

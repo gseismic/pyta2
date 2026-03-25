@@ -1,3 +1,4 @@
+from .version import __version__
 from .trend import *
 # from .momentum import *
 # from .volume import *

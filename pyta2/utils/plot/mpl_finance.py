@@ -697,13 +697,13 @@ def ensure_plt_dates(dates, N):
             if nbit_date == 10:
                 dates = np.array(dates)
             elif nbit_date == 13:
-                dates = np.array(dates)/3
+                dates = np.array(dates) / 1e3
             elif nbit_date == 16:
-                dates = np.array(dates)/6
+                dates = np.array(dates) / 1e6
             elif nbit_date == 19:
-                dates = np.array(dates)/9
+                dates = np.array(dates) / 1e9
             else:
-                raise Exception(f'Failed to deduce date `{dates[0]=}`')
+                raise Exception(f'无法推断日期格式: `{dates[0]=}`')
             dates = [arrow.get(date).datetime for date in dates]
         elif isinstance(dates[0], str):
             dates = [arrow.get(date).datetime for date in dates]

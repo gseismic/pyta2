@@ -51,62 +51,34 @@ def kplot_df(ax: plt.Axes,
     matplotlib.axes.Axes or None
         成交量轴对象（如果显示成交量）或None
     """
-    def get_key_values(key: Union[str, Callable]) -> Optional[np.ndarray]: 
-        """从DataFrame中提取指定列的数据"""
+    def get_key_data(key: Union[str, Callable], name: str) -> np.ndarray:
         if callable(key):
             return key(df)
         elif isinstance(key, str):
             if key in df.columns:
                 return df[key].values
-            else:
-                logging.warning(f'Column "{key}" not found in DataFrame')
-                return None
-        else:
-            raise ValueError(f'Unsupported parameter type for key: {type(key)}')
+            raise KeyError(f'Column "{key}" (for {name}) not found in DataFrame')
+        raise TypeError(f'Unsupported key type for {name}: {type(key)}')
     
     # 提取OHLC数据
-    opens = get_key_values(key_open)
-    highs = get_key_values(key_high)
-    lows = get_key_values(key_low)
-    closes = get_key_values(key_close)
+    opens = get_key_data(key_open, "open")
+    highs = get_key_data(key_high, "high")
+    lows = get_key_data(key_low, "low")
+    closes = get_key_data(key_close, "close")
     
-    # 验证必要数据是否存在
-    if any(data is None for data in [opens, highs, lows, closes]):
-        raise ValueError("Missing required OHLC data columns")
+    # 提取可选数据
+    dates = get_key_data(key_date, "date") if use_date else None
+    volumes = get_key_data(key_volume, "volume") if show_volume else None
     
-    # 提取日期数据
-    dates = get_key_values(key_date) if use_date else None
-
-    # 提取成交量数据
-    volumes = get_key_values(key_volume) if show_volume else None
-    
-    # 调用核心绘图函数
     return kplot(ax, opens, highs, lows, closes, volumes=volumes, dates=dates, **kwargs)
 
-def ensure_numpy(vec: Union[np.ndarray, Any], dtype: Optional[np.dtype] = None) -> np.ndarray:
-    """
-    确保输入转换为numpy数组
-    
-    Parameters:
-    -----------
-    vec : array-like
-        输入数据
-    dtype : numpy.dtype, optional
-        目标数据类型
-        
-    Returns:
-    --------
-    numpy.ndarray
-        转换后的numpy数组
-    """
-    # 如果是pandas对象，提取values
+def ensure_numpy(vec: Any, dtype: Optional[np.dtype] = None) -> np.ndarray:
+    """确保输入转换为 numpy 数组，处理 None 和 pandas 对象"""
+    if vec is None:
+        return np.array([], dtype=dtype or np.float64)
     if hasattr(vec, 'values'):
         vec = vec.values
-    
-    # 转换为numpy数组
-    if dtype is not None:
-        return np.array(vec, dtype=dtype)
-    return np.array(vec)
+    return np.asanyarray(vec, dtype=dtype)
 
 def kplot(ax: plt.Axes, 
           opens: Union[np.ndarray, list], 
@@ -215,19 +187,23 @@ def kplot(ax: plt.Axes,
             volume_ax = ax.twinx()
         
         _volumes = ensure_numpy(volumes, dtype=np.float64)
-        max_volumes = np.max(_volumes)
-        _top = max_volumes * (1 + 0.03 + 0.25) / 0.25
-        
-        # 绘制成交量
-        volume_ax.axhline(y=max_volumes, color='k', lw=0.5)
-        volume_overlay(volume_ax, _opens, _closes, _volumes, dates=dates, 
-                      width=width, alpha=alpha,
-                      colorup=colorup, colordown=colordown)
-        volume_ax.set_ylim(0, _top)
-        volume_ax.spines['right'].set_visible(False)
-        
-        if volume_yticklabel_off:
-            plt.setp(volume_ax, yticklabels=[])
+        try:
+            v_max = np.nanmax(_volumes)
+            # 这里的比例控制成交量在底部占据约 25% 的高度
+            v_top = v_max * 4.0 if v_max > 0 else 1.0
+            
+            # 绘制成交量背景参考线
+            volume_ax.axhline(y=v_max, color='gray', linestyle='--', lw=0.5, alpha=0.3)
+            volume_overlay(volume_ax, _opens, _closes, _volumes, dates=dates, 
+                          width=width, alpha=alpha,
+                          colorup=colorup, colordown=colordown)
+            volume_ax.set_ylim(0, v_top)
+            volume_ax.spines['right'].set_visible(False)
+            
+            if volume_yticklabel_off:
+                volume_ax.set_yticklabels([])
+        except ValueError: # All-NaN slice
+            pass
 
     # 处理日期格式化
     if dates is not None:

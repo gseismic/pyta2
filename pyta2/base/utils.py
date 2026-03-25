@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional, Type
-from .indicator import rIndicator
-from ..utils.vector import VectorTable
+from pyta2.base.indicator import rIndicator
+from pyta2.utils.vector import VectorTable
 
 def get_outputs(outputs: VectorTable, return_type='dict', reverse=False):
     return_type = return_type.lower()

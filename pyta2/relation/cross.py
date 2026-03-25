@@ -2,7 +2,7 @@ import numpy as np
 from ..base import rIndicator
 from ..base.schema import Schema
 from ..utils.space.box import Scalar
-from ..utils.space.discrete import Category
+from ..utils.space.category import Category
 from ..utils.deque.numpy_deque import NumpyDeque
 from ..trend.ma import get_ma_class
 

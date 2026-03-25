@@ -1,5 +1,5 @@
 from typing import List, Tuple, Union
-from ..utils.space import Space
+from pyta2.utils.space import Space
 from collections import OrderedDict
 
 class Schema:

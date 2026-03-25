@@ -11,8 +11,8 @@ class Schema:
             schema: 字段名和空间定义
         Example1:
             schema = [
-                ('rsi', Space.Scalar(high=100, low=0, dtype=np.float64))
-                ('macd', Space.Scalar(high=100, low=0, dtype=np.float64))
+                ('rsi', Space.Scalar(high=100, low=0, dtype=np.float64)),
+                ('macd', Space.Scalar(high=100, low=0, dtype=np.float64)),
             ]
             schema = Schema(schema)
         Example2:
@@ -52,15 +52,6 @@ class Schema:
     
     def __len__(self):
         return len(self.schema)
-    
-    # def get_keys(self): 
-    #     return list(self.schema.keys())
-    
-    # def get_spaces(self, as_list: bool = False):
-    #     if as_list:
-    #         return list(self.schema.values())
-    #     else:
-    #         return self.schema
-    
+
     def get_dtypes(self):
         return {key: space.dtype for key, space in self.schema.items()}

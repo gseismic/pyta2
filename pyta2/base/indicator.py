@@ -5,9 +5,6 @@ from pyta2.utils.space import Space
 from pyta2.base.schema import Schema
 from collections import OrderedDict
 
-# fn = rSMA(10)@rSMA(10)@rSMA(10) 
-# rSMA(10) << prices 
-# rSMA(10)@rSMA(10)@prices 
 class rIndicator(ABC): 
     name = None 
     
@@ -50,6 +47,7 @@ class rIndicator(ABC):
                                    dtypes=self.schema.get_dtypes(),
                                    buffer_factor=self.buffer_factor)
         # self.father_indicator = None 
+        self._meta_info = None
         self.reset() 
     
     def resize_buffer(self, buffer_size: int):
@@ -64,24 +62,10 @@ class rIndicator(ABC):
             self.extra_window = extra_window
         # self.required_window = self.window + self.extra_window
     
-    # def __rmatmul__(self, other): 
-    #     return self.__matmul__(other)  
-    
-    # def __lshift__(self, other): 
-    #     # 左移,  << 
-    #     # 例如, rSMA(10) << prices
-    #     if isinstance(other, rIndicator):
-    #         self.extra_window += other.required_window - 1
-    #         # buffer_size依赖于右侧需要多大，而不是依赖于左侧需要多大
-    #         other.set_window(extra_window=self.required_window-1)
-    #         self.father_indicator = other
-    #         self.buffer_size = max(self.buffer_size, other.required_window)
-    #         # self.set_window(window=None, extra_window=other.required_window-1)
-    #     return self.step(other)
-    
     def reset(self):
         self.g_index = -1
         self._outputs.clear()
+        self._meta_info = None
         self.reset_extras()
     
     def rolling(self, *args, **kwargs):
@@ -122,27 +106,6 @@ class rIndicator(ABC):
     def full_name(self):
         pass
     
-    # def __getitem__(self, key: str):
-    #     return self._outputs[key]
-    
-    # def loc(self, key: str):
-    #     return self._outputs.loc(key)
-    
-    # def iloc(self, key: int):
-    #     return self._outputs.iloc(key)
-    
-    # def __getitem__(self, key: str):
-    #     return self.output[key]
-    
-    # def __contains__(self, key: str):
-    #     return key in self.output
-    
-    # def __iter__(self):
-    #     return iter(self.output)
-    
-    # def __len__(self):
-    #     return len(self.output)
-    
     def make_dict_output(self, output: Any):
         if len(self.output_keys) == 1:
             return {self.output_keys[0]: output}
@@ -159,17 +122,16 @@ class rIndicator(ABC):
         
     @property
     def meta_info(self):
-        return {
-            'name': self.name,
-            'full_name': self.full_name,
-            'schema': self.schema,
-            'window': self.window,
-            'extra_window': self.extra_window,
-            'required_window': self.required_window,
-            'buffer_size': self.buffer_size,
-            'buffer_factor': self.buffer_factor,
-            # 'return_dict': self.return_dict,
-            'g_index': self.g_index,
-            # 'outputs': self.outputs,
-            # 'meta_info': self.meta_info,
-        }
+        if self._meta_info is None:
+            self._meta_info = {
+                'name': self.name,
+                'full_name': self.full_name,
+                'schema': self.schema,
+                'window': self.window,
+                'extra_window': self.extra_window,
+                'required_window': self.required_window,
+                'buffer_size': self.buffer_size,
+                'buffer_factor': self.buffer_factor,
+                'g_index': self.g_index,
+            }
+        return self._meta_info

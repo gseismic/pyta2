@@ -19,18 +19,12 @@ class rZigZag_Unit(rZigZagBase):
         super(rZigZag_Unit, self).__init__(delta, **kwargs)
 
     def reset_extras(self):
-        self._closes.clear()
+        self._closes = MovingVector()
         self.ref_unit = None
     def forward_ready(self, units, closes) -> bool:
         return len(closes) >= self.required_window
     
-    def pre_forward(self, units, closes):
-        return self._cache_and_compute(units, closes)
-
-    def safe_forward(self, units, closes):
-        return self._cache_and_compute(units, closes)
-    
-    def _cache_and_compute(self, units, closes):
+    def forward(self, units, closes):
         confirmed_at = self._default_confirmed_at
         self._closes.append(closes[-1])
 
@@ -92,7 +86,7 @@ class rZigZag_Unit(rZigZagBase):
             self.searching_dir = 1
             self.ref_unit = units[-1] # 更新参考unit
 
-        if confirmed_at is not None:
+        if confirmed_at != self._default_confirmed_at:
             self._closes.rekeep_n(self._closes.notional_len - confirmed_at)
 
         return confirmed_at, self.searching_dir, self.i_high, self.i_low

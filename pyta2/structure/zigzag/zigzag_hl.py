@@ -17,20 +17,14 @@ class rZigZag_HL(rZigZagBase):
         super(rZigZag_HL, self).__init__(delta, **kwargs)
 
     def reset_extras(self):
-        self._highs.clear()
-        self._lows.clear()
+        self._highs = MovingVector()
+        self._lows = MovingVector()
         
     def forward_ready(self, highs, lows) -> bool:
         assert len(highs) == len(lows)
         return len(highs) >= self.required_window
     
-    def pre_forward(self, highs, lows):
-        return self._cache_and_compute(highs, lows)
-
-    def safe_forward(self, highs, lows):
-        return self._cache_and_compute(highs, lows)
-
-    def _cache_and_compute(self, highs, lows):
+    def forward(self, highs, lows):
         confirmed_at = self._default_confirmed_at
         self._highs.append(highs[-1])
         self._lows.append(lows[-1])
@@ -86,7 +80,7 @@ class rZigZag_HL(rZigZagBase):
             self.i_low = i
             self.searching_dir = 1
 
-        if confirmed_at is not None:
+        if confirmed_at != self._default_confirmed_at:
             self._highs.rekeep_n(self._highs.notional_len - confirmed_at)
             self._lows.rekeep_n(self._lows.notional_len - confirmed_at)
 

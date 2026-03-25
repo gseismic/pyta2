@@ -1,7 +1,7 @@
 import numpy as np
-from gymnasium.spaces import Box# , Discrete
 from ...base import rIndicator
-from ...utils.deque import NumPyDeque
+from ...utils.deque import NumpyDeque
+from ...utils.space import Scalar, PositiveScalar
 
 
 class rZigZagBase(rIndicator):
@@ -20,24 +20,21 @@ class rZigZagBase(rIndicator):
         self.i_low = 0
         self.i_high = 0
         self.searching_dir = 0
-        self._Is = NumPyDeque(zigzag_buffer_size, dtype=np.int32) # 位置
-        self._Ts = NumPyDeque(zigzag_buffer_size, dtype=np.int32) # 是最大值还是最小值
-        self._Vs = NumPyDeque(zigzag_buffer_size, dtype=np.float64) 
-        self._ICs = NumPyDeque(zigzag_buffer_size, dtype=np.int32) # 位置
-        self._YCs = NumPyDeque(zigzag_buffer_size, dtype=np.float64) # 值
-        rIndicator.__init__(self,
-                             window=2,
-                             num_outputs=4,
-                             output_dtypes=[int]*4,
-                             output_keys=['confirmed_at', 'searching_dir', 'i_high', 'i_low'],
-                             output_spaces=[
-                                Box(low=-1, high=np.inf, shape=(), dtype=np.int32),
-                                Box(low=-1, high=1, shape=(), dtype=np.int32),
-                                Box(low=0, high=np.inf, shape=(), dtype=np.int32),
-                                Box(low=0, high=np.inf, shape=(), dtype=np.int32),
-                             ],
-                             **kwargs
-                             )
+        self._Is = NumpyDeque(zigzag_buffer_size, dtype=np.int32) # 位置
+        self._Ts = NumpyDeque(zigzag_buffer_size, dtype=np.int32) # 是最大值还是最小值
+        self._Vs = NumpyDeque(zigzag_buffer_size, dtype=np.float64) 
+        self._ICs = NumpyDeque(zigzag_buffer_size, dtype=np.int32) # 位置
+        self._YCs = NumpyDeque(zigzag_buffer_size, dtype=np.float64) # 值
+        super(rZigZagBase, self).__init__(
+            window=2,
+            schema=[
+                ('confirmed_at', Scalar(low=-1, high=np.iinfo(np.int32).max, dtype=np.int32)),
+                ('searching_dir', Scalar(low=-1, high=1, dtype=np.int32)),
+                ('i_high', PositiveScalar(high=np.iinfo(np.int32).max, dtype=np.int32)),
+                ('i_low', PositiveScalar(high=np.iinfo(np.int32).max, dtype=np.int32)),
+            ],
+            **kwargs
+        )
     @property
     def recent_Is(self):
         return self._Is.values
@@ -52,7 +49,7 @@ class rZigZagBase(rIndicator):
     
     @property
     def recent_Ys(self):
-        return self._Vs.values
+        return self._YCs.values
 
     @property
     def recent_ICs(self):

@@ -13,18 +13,12 @@ class rZigZag(rZigZagBase):
         super(rZigZag, self).__init__(delta, **kwargs)
     
     def reset_extras(self):
-        self._values.clear()
+        self._values = MovingVector()
         
     def forward_ready(self, values) -> bool:
         return len(values) >= self.required_window
     
-    def pre_forward(self, values):
-        return self._cache_and_compute(values)
-
-    def safe_forward(self, values):
-        return self._cache_and_compute(values)
-
-    def _cache_and_compute(self, values):
+    def forward(self, values):
         '''
         只输出全局索引，避免问题复杂化，要从数据开始就开始调用.rolling，而非等window-ready
         否则全局索引需要添加额外的偏移量
@@ -33,7 +27,6 @@ class rZigZag(rZigZagBase):
         self._values.append(values[-1])
         _values = self._values
 
-        # confirmed, confirmed_at = False, None
         confirmed_at = self._default_confirmed_at # 而不再是None
 
         i = _values.notional_len - 1  # latest
@@ -68,8 +61,6 @@ class rZigZag(rZigZagBase):
             delta_over_ilow /= _values[self.i_low]
 
         if self.searching_dir in [1, 0] and delta_over_ihigh <= - self.down_delta:
-            # O1
-            # confirmed = True
             confirmed_at = self.i_high
 
             self._ICs.append(self.g_index)
@@ -81,7 +72,6 @@ class rZigZag(rZigZagBase):
             self.i_low = i
             self.searching_dir = -1
         elif self.searching_dir in [-1, 0] and delta_over_ilow >= self.up_delta:
-            # confirmed = True
             confirmed_at = self.i_low
 
             self._ICs.append(self.g_index)
@@ -93,7 +83,7 @@ class rZigZag(rZigZagBase):
             self.i_high = i
             self.searching_dir = 1
 
-        if confirmed_at is not None:
+        if confirmed_at != self._default_confirmed_at:
             self._values.rekeep_n(self._values.notional_len - confirmed_at)
             
         return confirmed_at, self.searching_dir, self.i_high, self.i_low

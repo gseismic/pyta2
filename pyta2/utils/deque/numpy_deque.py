@@ -43,9 +43,37 @@ class NumpyDeque(object):
     def is_full(self):
         return self._end_idx - self._start_idx == self._maxlen
 
-    def append(self, value):
-        self.push(value)
-    
+    def append(self, value): 
+        """添加单个值到末尾 | Add a single value to the end"""
+        self._view_cache = None 
+        if self._end_idx >= self._cache_size: 
+            num = self._end_idx - self._start_idx 
+            self._data[:num] = self._data[self._start_idx:self._end_idx]
+            self._start_idx = 0
+            self._end_idx = num
+        
+        # 处理 None 值
+        if value is None:
+            dtype = self._dtype if hasattr(self._dtype, 'kind') else np.dtype(self._dtype)
+            if dtype.kind in ['f', 'c']:  # 浮点数或复数
+                value = np.nan
+            elif dtype.kind == 'M':  # datetime
+                value = np.datetime64('NaT')
+            elif dtype.kind == 'm':  # timedelta
+                value = np.timedelta64('NaT')
+            elif dtype.kind == 'b':  # 布尔
+                value = False
+            elif dtype.kind in ['i', 'u']:  # 整数
+                value = 0
+            else:  # 对象类型或其他
+                value = None
+        
+        self._data[self._end_idx] = value
+        self._end_idx += 1
+        # shift
+        if self._end_idx - self._start_idx > self._maxlen:
+            self._start_idx += 1
+
     def extend(self, values):
         """批量添加值 | Batch add values (Optimized)"""
         self._view_cache = None
@@ -83,14 +111,7 @@ class NumpyDeque(object):
     
     @staticmethod
     def infer_dtype(value: Any) -> np.dtype:
-        """推断数据类型 | Infer data type
-        
-        Args:
-            value: 要推断类型的值 | Value to infer type from
-            
-        Returns:
-            np.dtype: 推断出的NumPy数据类型 | Inferred NumPy dtype
-        """
+        """推断数据类型 | Infer data type"""
         if isinstance(value, (np.ndarray, np.generic)):
             return value.dtype
         elif isinstance(value, bool):
@@ -100,44 +121,11 @@ class NumpyDeque(object):
         elif isinstance(value, float):
             return np.float64
         elif isinstance(value, str):
-            return np.dtype('O')  # 字符串使用对象类型
+            return np.dtype('O')
         elif isinstance(value, (list, tuple)):
-            return np.dtype('O')  # 复合类型使用对象类型
+            return np.dtype('O')
         else:
-            return np.dtype('O')  # 其他类型默认使用对象类型
-
-    def push(self, value): 
-        self._view_cache = None 
-        if self._end_idx >= self._cache_size: 
-            num = self._end_idx - self._start_idx 
-            self._data[:num] = self._data[self._start_idx:self._end_idx]
-            # self._data[num:] = 0 # 如果赋值为np.nan, 如果dtype为int, 会导致数据类型改变
-            # self._data[self._start_idx:self._end_idx] = 0  # factor <2 时会导致数据被覆盖, 
-            self._start_idx = 0
-            self._end_idx = num
-        
-        # 处理 None 值
-        if value is None:
-            dtype = self._dtype if hasattr(self._dtype, 'kind') else np.dtype(self._dtype)
-            if dtype.kind in ['f', 'c']:  # 浮点数或复数
-                value = np.nan
-            elif dtype.kind == 'M':  # datetime
-                value = np.datetime64('NaT')
-            elif dtype.kind == 'm':  # timedelta
-                value = np.timedelta64('NaT')
-            elif dtype.kind == 'b':  # 布尔
-                value = False
-            elif dtype.kind in ['i', 'u']:  # 整数
-                value = 0
-            else:  # 对象类型或其他
-                value = None
-        
-        self._data[self._end_idx] = value
-        self._end_idx += 1
-        # shift，
-        # FIXED: self._end_idx > self._maxlen:
-        if self._end_idx - self._start_idx > self._maxlen:
-            self._start_idx += 1
+            return np.dtype('O')
 
     def popleft(self):
         """移除并返回最左侧(最早)的元素 | FIFO"""
@@ -323,7 +311,7 @@ def benchmark(n=1000000, size=100000):
     import time, random
     q = NumpyDeque(size)
     for i in range(size):
-        q.push(i)
+            q.append(i)
 
     indices = [random.randint(-size, size - 1) for _ in range(n)]
 
@@ -348,7 +336,7 @@ def benchmark_set(n=500000, size=10000):
     import time, random
     q = NumpyDeque(size)
     for i in range(size):
-        q.push(i)
+            q.append(i)
 
     indices = [random.randint(-size, size - 1) for _ in range(n)]
     values = [random.random() for _ in range(n)]
@@ -375,43 +363,43 @@ if __name__ == "__main__":
         benchmark_set(n=5000000, size=10000)
     if 0:
         q = NumpyDeque(5)
-        q.push(1)
-        q.push(2)
-        q.push(3)
-        q.push(4)
-        q.push(5)
+        q.append(1)
+        q.append(2)
+        q.append(3)
+        q.append(4)
+        q.append(5)
         print(q)
         print(q[1:3])
         print(q[1:-1])
     if 0:
         q = NumpyDeque(3, buffer_factor=2)
-        q.push(1)
-        q.push(2)
-        q.push(3)
-        q.pop()
-        q.push(4)
+        q.append(1)
+        q.append(2)
+        q.append(3)
+        q.popleft()
+        q.append(4)
         print(q)
-        print(q.values) # XXX 
+        print(q.values) 
         print(q[-1])
     if 0:
         q = NumpyDeque(3)
         print(q)
-        q.push(1)
+        q.append(1)
         assert(q[0] == 1)
         assert(len(q) == 1)
         print(q)
-        q.push(2)
+        q.append(2)
         assert(q[0] == 1)
         assert(q[1] == 2)
         assert(len(q) == 2)
         print(q)
-        q.push(3)
+        q.append(3)
         assert(q[0] == 1)
         assert(q[1] == 2)
         assert(q[2] == 3)
         assert(len(q) == 3)
         print(q)
-        q.push(4)
+        q.append(4)
         assert(q[0] == 2)
         assert(q[1] == 3)
         assert(q[2] == 4)
@@ -419,25 +407,25 @@ if __name__ == "__main__":
         print(q)
     if 0:
         q = NumpyDeque(2, buffer_factor=2)
-        q.push(1)
-        q.push(2)
-        q.push(3)
-        q.push(4)
-        q.push(5)
-        q.push(6)
+        q.append(1)
+        q.append(2)
+        q.append(3)
+        q.append(4)
+        q.append(5)
+        q.append(6)
         print(q)
     if 0:
         q = NumpyDeque(3, buffer_factor=2)
-        q.push(1)
-        q.push(2)
-        q.push(3)
+        q.append(1)
+        q.append(2)
+        q.append(3)
         print(q)
-        q.pop()
-        q.pop()
+        q.popleft()
+        q.popleft()
         print(q)
         print(q[0])
     if 0:
         q = NumpyDeque(maxlen=None)
         for i in range(int(1e6)):
-            q.push(i)
+            q.append(i)
             print(len(q))

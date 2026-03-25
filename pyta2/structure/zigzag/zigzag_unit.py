@@ -21,8 +21,6 @@ class rZigZag_Unit(rZigZagBase):
     def reset_extras(self):
         self._closes = MovingVector()
         self.ref_unit = None
-    def forward_ready(self, units, closes) -> bool:
-        return len(closes) >= self.required_window
     
     def forward(self, units, closes):
         confirmed_at = self._default_confirmed_at
@@ -68,6 +66,7 @@ class rZigZag_Unit(rZigZagBase):
         if self.searching_dir in [1, 0] and delta_over_ihigh <= - self.down_delta:
             confirmed_at = self.i_high
             self._ICs.append(self.g_index)
+            self._YCs.append(self._closes[i])
             self._Is.append(self.i_high)
             self._Ts.append(1)
             self._Vs.append(self._closes[self.i_high])
@@ -78,6 +77,7 @@ class rZigZag_Unit(rZigZagBase):
         elif self.searching_dir in [-1, 0] and delta_over_ilow >= self.up_delta:
             confirmed_at = self.i_low
             self._ICs.append(self.g_index)
+            self._YCs.append(self._closes[i])
             self._Is.append(self.i_low)
             self._Ts.append(-1)
             self._Vs.append(self._closes[self.i_low])

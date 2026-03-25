@@ -49,7 +49,8 @@ class rZigZagBase(rIndicator):
     
     @property
     def recent_Ys(self):
-        return self._YCs.values
+        # alias 
+        return self._Vs.values
 
     @property
     def recent_ICs(self):

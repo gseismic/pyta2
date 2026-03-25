@@ -17,13 +17,7 @@ class rZigZag_HL_Unit(rZigZagBase):
         self._highs = MovingVector()
         self._lows = MovingVector()
         self._closes = MovingVector()
-        
-    def forward_ready(self, units, highs, lows, closes) -> bool:
-        print(f'{len(highs)=}')
-        print(f'{self.required_window=}')
-        print(f'{len(highs) >= self.required_window=}')
-        return len(highs) >= self.required_window
-
+          
     def forward(self, units, highs, lows, closes):
         confirmed_at = self._default_confirmed_at
         self._highs.append(highs[-1])
@@ -70,6 +64,7 @@ class rZigZag_HL_Unit(rZigZagBase):
                                   ] and delta_over_ihigh <= -self.down_delta:
             confirmed_at = self.i_high
             self._ICs.append(self.g_index)
+            self._YCs.append(self._lows[i])
             self._Is.append(self.i_high)
             self._Ts.append(1)
             self._Vs.append(self._highs[self.i_high])
@@ -81,6 +76,7 @@ class rZigZag_HL_Unit(rZigZagBase):
                                     ] and delta_over_ilow >= self.up_delta:
             confirmed_at = self.i_low
             self._ICs.append(self.g_index)
+            self._YCs.append(self._highs[i])
             self._Is.append(self.i_low)
             self._Ts.append(-1)
             self._Vs.append(self._lows[self.i_low])

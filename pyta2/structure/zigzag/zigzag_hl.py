@@ -20,10 +20,6 @@ class rZigZag_HL(rZigZagBase):
         self._highs = MovingVector()
         self._lows = MovingVector()
         
-    def forward_ready(self, highs, lows) -> bool:
-        assert len(highs) == len(lows)
-        return len(highs) >= self.required_window
-    
     def forward(self, highs, lows):
         confirmed_at = self._default_confirmed_at
         self._highs.append(highs[-1])
@@ -64,6 +60,7 @@ class rZigZag_HL(rZigZagBase):
         if self.searching_dir in [1, 0] and delta_over_ihigh <= - self.down_delta:
             confirmed_at = self.i_high
             self._ICs.append(self.g_index)
+            self._YCs.append(self._lows[i])
             self._Is.append(self.i_high)
             self._Ts.append(1)
             self._Vs.append(self._highs[self.i_high])
@@ -73,6 +70,7 @@ class rZigZag_HL(rZigZagBase):
         elif self.searching_dir in [-1, 0] and delta_over_ilow >= self.up_delta:
             confirmed_at = self.i_low
             self._ICs.append(self.g_index)
+            self._YCs.append(self._highs[i])
             self._Is.append(self.i_low)
             self._Ts.append(-1)
             self._Vs.append(self._lows[self.i_low])

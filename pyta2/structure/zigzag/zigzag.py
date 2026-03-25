@@ -15,9 +15,6 @@ class rZigZag(rZigZagBase):
     def reset_extras(self):
         self._values = MovingVector()
         
-    def forward_ready(self, values) -> bool:
-        return len(values) >= self.required_window
-    
     def forward(self, values):
         '''
         只输出全局索引，避免问题复杂化，要从数据开始就开始调用.rolling，而非等window-ready
@@ -64,6 +61,7 @@ class rZigZag(rZigZagBase):
             confirmed_at = self.i_high
 
             self._ICs.append(self.g_index)
+            self._YCs.append(_values[i])
             self._Is.append(self.i_high)
             self._Ts.append(1)
             self._Vs.append(_values[self.i_high])
@@ -75,6 +73,7 @@ class rZigZag(rZigZagBase):
             confirmed_at = self.i_low
 
             self._ICs.append(self.g_index)
+            self._YCs.append(_values[i])
             self._Is.append(self.i_low)
             self._Ts.append(-1)
             self._Vs.append(_values[self.i_low])

@@ -27,7 +27,7 @@ def get_outputs(outputs: VectorTable, return_type='dict', reverse=False):
     else:
         raise Exception(f'Not Supported `{return_type=}`')
         
-def forward_rolling_apply(num: int, obj_cls: Type[rIndicator], param_args: List[Any] = [], 
+def forward_rolling_apply(num: int, obj_cls: Type[rIndicator], param_args: List[Any] = [],
                           param_kwargs: Dict[str, Any] = {},
                           input_args: List[Any] = [], input_kwargs: Dict[str, Any] = {},
                           doroll_input_args: Optional[List[bool]] = None,
@@ -37,25 +37,32 @@ def forward_rolling_apply(num: int, obj_cls: Type[rIndicator], param_args: List[
     apply rolling forward
     '''
     assert 'buffer_size' not in param_kwargs, 'buffer_size is not allowed in param_kwargs'
-    assert doroll_input_args is None or len(doroll_input_args) == len(input_args), 'doroll_input_args must be None or have the same length as input_args'
+    assert doroll_input_args is None or len(doroll_input_args) == len(input_args), \
+        f'doroll_input_args must be None or have the same length as input_args, got len(doroll_input_args)={len(doroll_input_args) if doroll_input_args else None}, len(input_args)={len(input_args)}'
     if num < 1:
         raise ValueError(f'num must be greater than 0, got {num}')
-    param_kwargs = { **param_kwargs, **{ 'return_dict': True}}
+    param_kwargs = {**param_kwargs, 'return_dict': True}
     obj = obj_cls(*param_args, **param_kwargs)
     if hasattr(obj, 'reset'):
         obj.reset()
 
     output_table = VectorTable()
     if doroll_input_args is None:
-        # doroll_input_args = [True]*len(input_args)
         doroll_input_args = [True if arg is not None else False for arg in input_args]
     if doroll_input_kwargs is None:
         doroll_input_kwargs = {key: True if val is not None else False for key, val in input_kwargs.items()}
 
+    def _slice_input(arg, i, do_roll):
+        if not do_roll:
+            return arg
+        if hasattr(arg, 'values'):
+            return arg.values[:i+1]
+        return arg[:i+1]
+
     for i in range(num):
-        output = obj.rolling(*[arg if not vtype else arg.values[:i+1] if hasattr(arg, 'values') else arg[:i+1] for vtype, arg in zip(doroll_input_args, input_args)], 
-            **{key: (val.values[:i+1] if hasattr(val, 'values') else val[:i+1]) if doroll_input_kwargs.get(key, True) else val for key, val in input_kwargs.items()}
-        )
+        sliced_args = [_slice_input(arg, i, vtype) for vtype, arg in zip(doroll_input_args, input_args)]
+        sliced_kwargs = {key: _slice_input(val, i, doroll_input_kwargs.get(key, True)) for key, val in input_kwargs.items()}
+        output = obj.rolling(*sliced_args, **sliced_kwargs)
         output_table.append(output)
 
     if return_meta_info:

@@ -81,7 +81,7 @@ class Category(Space):
         return {
             "type": "Cat",
             "categories": list(self.categories),
-            "dtype": self.dtype,
+            "dtype": str(self.dtype),
         }
 
     @classmethod

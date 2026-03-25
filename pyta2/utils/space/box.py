@@ -70,9 +70,14 @@ class Box(Space):
 
     def contains(self, x):
         x = np.asarray(x, dtype=self.dtype)
-        return (
-            x.shape == self.shape and np.all(x >= self.low) and np.all(x <= self.high)
-        )
+        if x.shape != self.shape:
+            return False
+        # 正常范围检查
+        in_range = np.all(x >= self.low) and np.all(x <= self.high)
+        if in_range:
+            return True
+        # 如果不在范围内，检查是否全为 null_value
+        return self.is_null(x).all() if x.shape != () else self.is_null(x)
 
     def is_null(self, x):
         """检查给定值是否为null值"""
@@ -126,13 +131,22 @@ class Box(Space):
             "low": self.low.tolist(),
             "high": self.high.tolist(),
             "shape": self.shape,
-            "dtype": self.dtype,
+            "dtype": str(self.dtype),
+            "null_value": (
+                float(self.null_value)
+                if isinstance(self.null_value, (np.floating, float))
+                else self.null_value
+            ),
         }
 
     @classmethod
     def from_json(cls, data):
         return cls(
-            low=data["low"], high=data["high"], shape=data["shape"], dtype=data["dtype"]
+            low=data["low"],
+            high=data["high"],
+            shape=data["shape"],
+            dtype=np.dtype(data["dtype"]),
+            null_value=data.get("null_value"),
         )
 
 

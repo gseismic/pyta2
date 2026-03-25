@@ -39,6 +39,7 @@ class Discrete(Space):
         return {
             "type": "Discrete",
             "n": self.n,
+            "dtype": str(self.dtype),
         }
 
     @classmethod

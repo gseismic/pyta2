@@ -63,6 +63,65 @@ class TestNumpyDeque:
         assert q[0] == 2  # 第一个元素被移除
         assert q[1] == 3
         assert q[2] == 4
+
+    def test_maxlen_none(self):
+        """测试无限长度 (maxlen=None)"""
+        q = NumpyDeque(maxlen=None)
+        assert q.maxlen is None
+        assert q.is_full() == False
+        
+        # 添加超过初始缓存大小的数据
+        for i in range(2000):
+            q.append(i)
+            
+        assert len(q) == 2000
+        assert q[0] == 0
+        assert q[-1] == 1999
+        
+        # 测试批量扩展
+        q.extend(np.arange(2000, 5000))
+        assert len(q) == 5000
+        assert q[0] == 0
+        assert q[-1] == 4999
+
+    def test_maxlen_none_complex(self):
+        """测试无限长度下的复杂操作与多次扩容"""
+        # 强制较小的初始缓存，以便更快触发扩容
+        q = NumpyDeque(maxlen=None, buffer_factor=1.0)
+        q._cache_size = 10
+        q._data = np.empty((10,), dtype=q._dtype)
+        
+        # 1. 连续 append 触发多次倍增 (10 -> 20 -> 40)
+        for i in range(30):
+            q.append(i)
+        assert len(q) == 30
+        assert q._cache_size >= 30
+        assert np.array_equal(q.values, np.arange(30))
+        
+        # 2. popleft 释放头部空间
+        for _ in range(10):
+            q.popleft()
+        assert len(q) == 20
+        assert q[0] == 10
+        
+        # 3. 再次添加，应该先触发平移 (Shift) 而不是扩容
+        old_cache_size = q._cache_size
+        q.append(30)
+        assert q._cache_size == old_cache_size
+        assert len(q) == 21
+        
+        # 4. 大规模 extend 触发直接计算所需空间并扩容
+        large_batch = np.arange(100, 200)
+        q.extend(large_batch)
+        assert len(q) == 121
+        assert q._cache_size >= 121
+        assert q[-1] == 199
+        
+        # 5. 清空后依然保持无限模式
+        q.clear()
+        assert len(q) == 0
+        q.append(999)
+        assert q[0] == 999
         
     def test_popleft(self):
         """测试popleft操作"""

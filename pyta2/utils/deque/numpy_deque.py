@@ -6,21 +6,22 @@ from numpy.typing import DTypeLike, NDArray
 __all__ = ['NumpyDeque', 'NumPyDeque']
 
 class NumpyDeque(object):
-    """
-    q = NumpyDeque(100)
-    
-    ChangeLog:
-        - [@2025-09-19] fix `push`
-        - [@2025-09-19] 优化 __getitem__ and __setitem__
-        - [@2025-10-08] add is_empty and is_full
-    """
-    default_maxlen = int(1e8)
+    """NumPy-backed deque with circular buffer and dynamic resizing."""
     def __init__(self, maxlen, dtype=np.float64, buffer_factor=None):
         assert maxlen is None or maxlen >= 1
         assert buffer_factor is None or buffer_factor >= 1.0 
-        self._maxlen = maxlen if maxlen is not None else self.default_maxlen
+        self._maxlen = maxlen 
+        
+        # 获取缓冲区因子
         self._buffer_factor = buffer_factor or self._get_buffer_factor()
-        self._cache_size = int(self._maxlen * self._buffer_factor)
+        
+        # 计算初始缓存大小
+        if self._maxlen is None:
+            # 无限模式：初始分配一个较小值
+            self._cache_size = 1024 
+        else:
+            self._cache_size = int(self._maxlen * self._buffer_factor)
+            
         self._dtype = dtype or np.float64
         self._data = np.empty((self._cache_size,), dtype=dtype) 
         self._start_idx = 0 
@@ -28,6 +29,8 @@ class NumpyDeque(object):
         self._view_cache = None 
     
     def _get_buffer_factor(self): 
+        if self._maxlen is None:
+            return 2.0
         if self._maxlen >= 1e9: 
             return 1.2 
         elif self._maxlen >= 1e6: 
@@ -41,16 +44,49 @@ class NumpyDeque(object):
         return self._end_idx == self._start_idx
     
     def is_full(self):
+        if self._maxlen is None:
+            return False
         return self._end_idx - self._start_idx == self._maxlen
+
+    def _ensure_capacity(self, num_new):
+        """确保能够容纳新元素 | Ensure cache can accommodate new elements"""
+        if self._end_idx + num_new > self._cache_size:
+            num_current = self._end_idx - self._start_idx
+            
+            if self._maxlen is None:
+                # 无限模式：检查是否需要扩容
+                # 如果当前有效数据已占缓存 50% 以上且加上新元素后溢出，则扩容
+                if num_current + num_new > self._cache_size:
+                    new_size = max(self._cache_size * 2, num_current + num_new + 1024)
+                    new_data = np.empty((new_size,), dtype=self._dtype)
+                    if num_current > 0:
+                        new_data[:num_current] = self._data[self._start_idx : self._end_idx]
+                    self._data = new_data
+                    self._cache_size = new_size
+                    self._start_idx = 0
+                    self._end_idx = num_current
+                else:
+                    # 仅平移即可
+                    if num_current > 0:
+                        self._data[:num_current] = self._data[self._start_idx : self._end_idx]
+                    self._start_idx = 0
+                    self._end_idx = num_current
+            else:
+                # 固定长度模式：平移并维护 maxlen
+                if num_current + num_new > self._maxlen:
+                    skip = (num_current + num_new) - self._maxlen
+                    self._start_idx += skip
+                    num_current = self._end_idx - self._start_idx
+                
+                if num_current > 0:
+                    self._data[:num_current] = self._data[self._start_idx : self._end_idx]
+                self._start_idx = 0
+                self._end_idx = num_current
 
     def append(self, value): 
         """添加单个值到末尾 | Add a single value to the end"""
         self._view_cache = None 
-        if self._end_idx >= self._cache_size: 
-            num = self._end_idx - self._start_idx 
-            self._data[:num] = self._data[self._start_idx:self._end_idx]
-            self._start_idx = 0
-            self._end_idx = num
+        self._ensure_capacity(1)
         
         # 处理 None 值
         if value is None:
@@ -71,7 +107,7 @@ class NumpyDeque(object):
         self._data[self._end_idx] = value
         self._end_idx += 1
         # shift
-        if self._end_idx - self._start_idx > self._maxlen:
+        if self._maxlen is not None and self._end_idx - self._start_idx > self._maxlen:
             self._start_idx += 1
 
     def extend(self, values):
@@ -83,30 +119,19 @@ class NumpyDeque(object):
             return
 
         # 如果新数据已经超过 maxlen，只保留最后 maxlen 个
-        if num_new > self._maxlen:
+        if self._maxlen is not None and num_new > self._maxlen:
             vals = vals[-self._maxlen:]
             num_new = self._maxlen
 
-        # 检查缓冲区剩余空间
-        if self._end_idx + num_new > self._cache_size:
-            # 空间不足，执行内存平移
-            num_current = self._end_idx - self._start_idx
-            # 如果平移后仍可能溢出 maxlen，更新 start_idx
-            if num_current + num_new > self._maxlen:
-                self._start_idx = self._end_idx - (self._maxlen - num_new)
-                num_current = self._end_idx - self._start_idx
-            
-            if num_current > 0:
-                self._data[:num_current] = self._data[self._start_idx : self._end_idx]
-            self._start_idx = 0
-            self._end_idx = num_current
+        # 确保空间
+        self._ensure_capacity(num_new)
 
         # 批量写入
         self._data[self._end_idx : self._end_idx + num_new] = vals
         self._end_idx += num_new
 
         # 维护 maxlen 约束
-        if self._end_idx - self._start_idx > self._maxlen:
+        if self._maxlen is not None and self._end_idx - self._start_idx > self._maxlen:
             self._start_idx = self._end_idx - self._maxlen
     
     @staticmethod
@@ -143,8 +168,8 @@ class NumpyDeque(object):
         self._end_idx = 0
     
     def resize(self, new_maxlen):
-        """调整队列最大长度"""
-        if new_maxlen <= 0:
+        """调整队列大小"""
+        if new_maxlen is not None and new_maxlen <= 0:
             raise ValueError("new_maxlen must be positive")
         
         # 保存当前数据
@@ -154,14 +179,17 @@ class NumpyDeque(object):
         # 更新参数
         self._maxlen = new_maxlen
         self._buffer_factor = self._get_buffer_factor()
-        self._cache_size = int(self._maxlen * self._buffer_factor)
+        if self._maxlen is None:
+            self._cache_size = max(current_size + 1024, 1024)
+        else:
+            self._cache_size = int(self._maxlen * self._buffer_factor)
         
         # 重新分配数据数组
         self._data = np.empty((self._cache_size,), dtype=self._dtype)
         
         # 如果新长度小于当前数据长度，只保留最新的数据
-        if new_maxlen < current_size:
-            current_data = current_data[-new_maxlen:]
+        if self._maxlen is not None and self._maxlen < current_size:
+            current_data = current_data[-self._maxlen:]
             current_size = len(current_data)
         
         # 重新填充数据

@@ -6,7 +6,7 @@ from pyta2.utils.deque.numpy_deque import NumpyDeque
 def test_initialization():
     # 测试默认初始化
     dt = DequeTable(maxlen=None)
-    assert dt.maxlen == NumpyDeque.default_maxlen
+    assert dt.maxlen is None
     assert len(dt) == 0
     assert dt.columns == []
     assert dt.dtypes == {}
@@ -260,6 +260,77 @@ def test_maxlen_behavior():
     assert len(dt) == 3
     assert dt['a'].tolist() == [7, 8, 9]
 
+def test_deque_table_maxlen_none():
+    """测试 DequeTable 的无限长度模式"""
+    dt = DequeTable(maxlen=None)
+    
+    # 1. 连续添加大量数据
+    for i in range(1200):
+        dt.append({'idx': i, 'val': float(i)})
+    
+    assert len(dt) == 1200
+    assert dt['idx'][0] == 0
+    assert dt['idx'][-1] == 1199
+    
+    # 2. 批量扩展
+    dt.extend({'idx': list(range(1200, 2400)), 'val': [v*1.0 for v in range(1200, 2400)]})
+    assert len(dt) == 2400
+    assert dt['idx'][0] == 0
+    assert dt['idx'][-1] == 2399
+    
+    # 3. 动态新增列
+    dt.append({'new_col': 99.9})
+    assert len(dt) == 2401
+    assert dt['new_col'][-1] == 99.9
+    assert np.isnan(dt['new_col'][0])
+
+def test_deque_table_complex():
+    """测试 DequeTable 的复杂场景：动态列、混合操作、扩容与缩放"""
+    dt = DequeTable(maxlen=None)
+    
+    # 1. 混合使用 append 和 extend 填充基础数据
+    dt.append({'a': 1, 'b': 1.1})
+    dt.extend({'a': [2, 3], 'b': [2.2, 3.3]})
+    assert len(dt) == 3
+    
+    # 2. 运行时动态新增列，验证旧数据自动填充 NaN/None
+    dt.append({'c': 'hello', 'a': 4})
+    assert len(dt) == 4
+    assert dt.columns == ['a', 'b', 'c']
+    assert np.isnan(dt['b'][3])  # 第4行没传 b
+    assert dt['c'][0] is None     # 第1行补齐 c
+    
+    # 3. 大量数据触发底层 NumpyDeque 多次扩容
+    large_n = 2000
+    dt.extend({
+        'a': list(range(10, 10 + large_n)),
+        'd': [f"val_{i}" for i in range(large_n)]
+    })
+    assert len(dt) == 4 + large_n
+    assert 'd' in dt.columns
+    assert len(dt['d']) == len(dt)
+    assert dt['d'][-1] == f"val_{large_n - 1}"
+    
+    # 4. 测试 resize (从无限模式切到有限模式)
+    dt.resize(100)
+    assert dt.maxlen == 100
+    assert len(dt) == 100
+    assert dt['a'][-1] == 10 + large_n - 1
+    
+    # 5. 测试再次 resize (切回无限模式)
+    dt.resize(None)
+    assert dt.maxlen is None
+    dt.append({'a': 9999})
+    assert len(dt) == 101
+    assert dt['a'][-1] == 9999
+    
+    # 6. 验证 clear 后列定义是否保留
+    dt.clear()
+    assert len(dt) == 0
+    assert 'a' in dt.columns
+    dt.append({'a': 0})
+    assert len(dt) == 1
+
 def test_mixed_types():
     dt = DequeTable(maxlen=5)
     
@@ -316,14 +387,33 @@ def test_dtypes_parameter():
     assert dt['a'][0] == 1000  # 实际存储为int16，但取值时会转换为Python int
     assert dt['b'][0] == pytest.approx(3.14)
     assert dt['c'][0] == np.datetime64('2023-01-01')
+
+def test_conversion_dataframe():
+    """测试转换为 Pandas 和 Polars DataFrame"""
+    dt = DequeTable(maxlen=5)
+    dt.extend({
+        'a': [1, 2, 3],
+        'b': [10.1, 20.2, 30.3]
+    })
+    
+    # 测试 Pandas
+    df_pd = dt.to_pandas()
+    import pandas as pd
+    assert isinstance(df_pd, pd.DataFrame)
+    assert df_pd.shape == (3, 2)
+    assert df_pd['a'].tolist() == [1, 2, 3]
+    
+    # 测试 Polars
+    df_pl = dt.to_polars()
+    import polars as pl
+    assert isinstance(df_pl, pl.DataFrame)
+    assert df_pl.shape == (3, 2)
+    assert df_pl['a'].to_list() == [1, 2, 3]
     
     # 测试新列类型推断
     print('-'*50)
     dt.append({'d': 'new column'})
     assert dt.dtypes['d'] == np.dtype('O')
-    
-    print(dt)
-    raise
     
 if __name__ == '__main__':
     # pytest.main(__file__)

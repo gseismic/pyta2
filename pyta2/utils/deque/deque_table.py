@@ -13,7 +13,7 @@ class DequeTable:
         buffer_factor: Optional[float] = None,
         dtypes: Optional[Dict[str, DTypeLike]] = None
     ) -> None:
-        self._maxlen = NumpyDeque.default_maxlen if maxlen is None else maxlen
+        self._maxlen = maxlen
         self._dtypes = dtypes or {}
         self._buffer_factor = buffer_factor or 1.5
         self._columns: OrderedDict[str, NumpyDeque] = OrderedDict()
@@ -43,19 +43,16 @@ class DequeTable:
         
         dtype = dtype or self._dtypes.get(key)
         self._dtypes[key] = dtype 
-        print('new column', key, dtype)
         self._columns[key] = NumpyDeque(
             maxlen=self._maxlen,
             dtype=dtype,
             buffer_factor=self._buffer_factor
         )
-        print('nnnew')
         # 获取填充值 | Get fill value
         if dtype is not None:
             self._fill_values[key] = self.get_fill_value(np.dtype(dtype))
         # 填充已有行 | Fill existing rows
         if self._size > 0:
-            print('fill existing rows', key, self._size)
             fill_value = self._fill_values.get(key) 
             self._columns[key].extend([fill_value] * self._size) 
 
@@ -75,7 +72,7 @@ class DequeTable:
             else:
                 self._columns[key].append(data[key])
                 
-        if self._size < self._maxlen:
+        if self._maxlen is None or self._size < self._maxlen:
             self._size += 1
 
     def extend(self, data: Dict[str, Sequence[Any]]) -> None:
@@ -105,7 +102,10 @@ class DequeTable:
             values = data.get(key, [fill_value] * length)
             self._columns[key].extend(values)
             
-        self._size = min(self._size + length, self._maxlen)
+        if self._maxlen is None:
+            self._size += length
+        else:
+            self._size = min(self._size + length, self._maxlen)
 
     def get_column(self, key: str) -> NDArray:
         """获取列数据"""
@@ -143,6 +143,16 @@ class DequeTable:
     def to_dict(self) -> Dict[str, NDArray]:
         """转换为列字典"""
         return {k: v.values for k, v in self._columns.items()}
+
+    def to_pandas(self):
+        """转换为 Pandas DataFrame"""
+        import pandas as pd
+        return pd.DataFrame(self.to_dict())
+
+    def to_polars(self):
+        """转换为 Polars DataFrame"""
+        import polars as pl
+        return pl.DataFrame(self.to_dict())
     
     def clear(self) -> None:
         """清空数据"""
@@ -160,7 +170,7 @@ class DequeTable:
         return list(self._columns.keys())
 
     @property
-    def maxlen(self) -> int:
+    def maxlen(self) -> Optional[int]:
         """返回最大长度"""
         return self._maxlen
 
@@ -176,13 +186,14 @@ class DequeTable:
             f"maxlen={self._maxlen}, data=\n{self.to_list()})"
         )
 
-    def resize(self, new_maxlen: int) -> None:
+    def resize(self, new_maxlen: Optional[int]) -> None:
         """调整队列大小"""
-        if new_maxlen <= 0:
+        if new_maxlen is not None and new_maxlen <= 0:
             raise ValueError("new_maxlen must be positive") 
             
         for deque in self._columns.values():
             deque.resize(new_maxlen)
             
         self._maxlen = new_maxlen
-        self._size = min(self._size, new_maxlen)
+        if self._maxlen is not None:
+            self._size = min(self._size, self._maxlen)

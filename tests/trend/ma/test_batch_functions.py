@@ -71,12 +71,12 @@ class TestBatchFunctions:
         assert len(result) == len(values)
         
         # 前几个值应该是NaN（窗口不足）
-        for i in range(5):  # HMA(4)需要更多窗口
-            print(i, result[i])
+        for i in range(4):  # HMA(4)需要5点窗口，即4个NaN
             assert np.isnan(result[i])
         
         # 窗口足够后开始有结果
-        assert not np.isnan(result[5])
+        assert not np.isnan(result[4])
+
     
     def test_dema_batch_function(self):
         """测试DEMA批量函数"""
@@ -88,11 +88,12 @@ class TestBatchFunctions:
         assert len(result) == len(values)
         
         # 前几个值应该是NaN（窗口不足）
-        for i in range(5):  # DEMA(3)需要2*3-1=5个窗口
+        for i in range(4):  # DEMA(3)需要2*3-1=5点窗口，即4个NaN
             assert np.isnan(result[i])
         
         # 窗口足够后开始有结果
-        assert not np.isnan(result[5])
+        assert not np.isnan(result[4])
+
     
     def test_tema_batch_function(self):
         """测试TEMA批量函数"""
@@ -104,11 +105,12 @@ class TestBatchFunctions:
         assert len(result) == len(values)
         
         # 前几个值应该是NaN（窗口不足）
-        for i in range(7):  # TEMA(3)需要3*3-2=7个窗口
+        for i in range(6):  # TEMA(3)需要3*3-2=7点窗口，即6个NaN
             assert np.isnan(result[i])
         
         # 窗口足够后开始有结果
-        assert not np.isnan(result[7])
+        assert not np.isnan(result[6])
+
     
     def test_batch_functions_with_numpy_array(self):
         """测试批量函数使用numpy数组"""

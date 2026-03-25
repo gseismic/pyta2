@@ -136,23 +136,32 @@ class DequeTable:
         for i in range(self._size-1, -1, -1):
             yield {k: v.values[i] for k, v in self._columns.items()}
 
-    def to_list(self) -> List[Dict[str, Any]]:
+    def to_list(self, reverse: bool = False) -> List[Dict[str, Any]]:
         """转换为字典列表"""
+        if reverse:
+            return [
+                {k: v.values[i] for k, v in self._columns.items()}
+                for i in range(self._size - 1, -1, -1)
+            ]
         return list(self)
-    
-    def to_dict(self) -> Dict[str, NDArray]:
-        """转换为列字典"""
-        return {k: v.values for k, v in self._columns.items()}
 
-    def to_pandas(self):
+    
+    def to_dict(self, reverse: bool = False) -> Dict[str, NDArray]:
+        """转换为列字典"""
+        return {k: v.values[::-1] if reverse else v.values for k, v in self._columns.items()}
+
+
+    def to_pandas(self, reverse: bool = False):
         """转换为 Pandas DataFrame"""
         import pandas as pd
-        return pd.DataFrame(self.to_dict())
+        return pd.DataFrame(self.to_dict(reverse=reverse))
 
-    def to_polars(self):
+
+    def to_polars(self, reverse: bool = False):
         """转换为 Polars DataFrame"""
         import polars as pl
-        return pl.DataFrame(self.to_dict())
+        return pl.DataFrame(self.to_dict(reverse=reverse))
+
     
     def clear(self) -> None:
         """清空数据"""

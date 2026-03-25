@@ -1,10 +1,10 @@
-from typing import List, Tuple, Union
-from pyta2.utils.space import Space
+from typing import List, Tuple, Union, Mapping
 from collections import OrderedDict
+from pyta2.utils.space import Space
 
 class Schema:
     def __init__(self, 
-                 schema: Union[List[Tuple[str, Space]], OrderedDict[str, Space]]
+                 schema: Union[List[Tuple[str, Space]], Mapping[str, Space]]
                  ):
         """ 
         Args:
@@ -28,12 +28,17 @@ class Schema:
             ])
             schema = Schema(schema)
         """
-        if isinstance(schema, list):
-            self.schema = OrderedDict(schema)
-        elif isinstance(schema, (OrderedDict, dict)):
+        if isinstance(schema, (list, dict, OrderedDict)):
             self.schema = OrderedDict(schema)
         else:
-            raise ValueError(f'schema must be a list[(str, Space)] or OrderedDict[str, Space], got {type(schema)}')
+            raise TypeError(f'schema must be a list[(str, Space)], dict, or OrderedDict, got {type(schema)}')
+        
+        # 内容校验：确保 key 是字符串，value 是 Space 类型
+        for key, space in self.schema.items():
+            if not isinstance(key, str):
+                raise ValueError(f"Schema key must be str, got {type(key)} for {key}")
+            if not isinstance(space, Space):
+                raise ValueError(f"Schema value must be a Space object, got {type(space)} for key '{key}'")
     
     def keys(self):
         return self.schema.keys()
@@ -55,3 +60,4 @@ class Schema:
 
     def get_dtypes(self):
         return {key: space.dtype for key, space in self.schema.items()}
+

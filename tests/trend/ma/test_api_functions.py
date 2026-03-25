@@ -90,7 +90,8 @@ class TestAPIFunctions:
         # with pytest.raises(AssertionError):
         #     get_ma_window('HMA', 1)  # HMA(1)会失败
         assert get_ma_window('HMA', 4) == 5  # max(1, 3) + 2 = 5
-        assert get_ma_window('HMA', 16) == 20  # max(7, 15) + 4 = 20
+        assert get_ma_window('HMA', 16) == 19  # max(7, 15) + 4 = 19
+
         
         # 测试DEMA不同周期
         assert get_ma_window('DEMA', 1) == 1  # 2*1-1 = 1
@@ -147,7 +148,10 @@ class TestAPIFunctions:
         
         for ma_type in ma_types:
             for period in periods:
+                if ma_type == 'HMA' and period == 1:
+                    continue
                 # 获取类和窗口
+
                 ma_class = get_ma_class(ma_type)
                 ma_function = get_ma_function(ma_type)
                 window = get_ma_window(ma_type, period)
@@ -190,7 +194,8 @@ class TestAPIFunctions:
         assert get_ma_window('SMA', 1) == 1
         assert get_ma_window('EMA', 1) == 1
         assert get_ma_window('WMA', 1) == 1
-        assert get_ma_window('HMA', 1) == 1
+        with pytest.raises(AssertionError):
+            get_ma_window('HMA', 1)
         assert get_ma_window('DEMA', 1) == 1
         assert get_ma_window('TEMA', 1) == 1
         

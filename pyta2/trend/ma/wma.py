@@ -13,7 +13,8 @@ class rWMA(rBaseMA):
     def reset_extras(self):
         pass
 
-    def forward(self, values):
+    def forward(self, values: np.ndarray):
         if len(values) < self.n:
             return np.nan
         return np.dot(values[-self.n:], self._weights)
+

@@ -36,23 +36,27 @@ class rIndicator(ABC):
         assert extra_window >= 0, f'extra_window must be greater than or equal to 0, got {extra_window}'
         assert buffer_size is None or buffer_size > 0, f'buffer_size must be greater than 0, got {buffer_size}'
         self.set_window(window, extra_window)
-        self.buffer_size = buffer_size if buffer_size is not None else 0
         self.schema = Schema(schema) if isinstance(schema, (list, dict, OrderedDict)) else schema
         self.buffer_factor = buffer_factor
         self.output_keys = list(self.schema.keys())
         self.return_dict = return_dict
-        
         self.g_index = -1
-        self._outputs = DequeTable(maxlen=self.buffer_size,
-                                   dtypes=self.schema.get_dtypes(),
-                                   buffer_factor=self.buffer_factor)
+        
+        self._outputs = None
+        self.resize_buffer(buffer_size)
+
         # self.father_indicator = None 
         self._meta_info = None
         self.reset() 
     
-    def resize_buffer(self, buffer_size: int):
+    def resize_buffer(self, buffer_size: Optional[int]):
         self.buffer_size = buffer_size
-        self._outputs.resize(buffer_size)
+        if self._outputs is None and (buffer_size is None or buffer_size > 0):
+            self._outputs = DequeTable(maxlen=self.buffer_size,
+                                       dtypes=self.schema.get_dtypes(),
+                                       buffer_factor=self.buffer_factor)
+        elif self._outputs is not None:
+            self._outputs.resize(buffer_size)
         
     def set_window(self, window: Optional[int] = None, 
                    extra_window: Optional[int] = None):
@@ -64,7 +68,8 @@ class rIndicator(ABC):
     
     def reset(self):
         self.g_index = -1
-        self._outputs.clear()
+        if self._outputs is not None:
+            self._outputs.clear()
         self._meta_info = None
         self.reset_extras()
     
@@ -82,7 +87,7 @@ class rIndicator(ABC):
         output = self.forward(*args, **kwargs) 
 
         dict_output = None
-        if self.buffer_size is not None and self.buffer_size > 0:
+        if self._outputs is not None:
             # 需要缓存
             dict_output = self.make_dict_output(output) 
             self._outputs.append(dict_output) 

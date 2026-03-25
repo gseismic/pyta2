@@ -4,9 +4,11 @@ from pyta2.utils.vector import VectorTable
 
 def get_outputs(outputs: VectorTable, return_type='dict', reverse=False):
     return_type = return_type.lower()
+    
     if return_type == 'tuple':
         # (x, y, z)
-        result = tuple(outputs.to_dict(reverse=reverse).values())
+        data_dict = outputs.to_dict(reverse=reverse)
+        result = tuple(data_dict.values())
         if len(result) == 1:
             return result[0]
         return result
@@ -17,15 +19,15 @@ def get_outputs(outputs: VectorTable, return_type='dict', reverse=False):
         # [{'x': x, 'y': y, 'z': z}, ...]
         return outputs.to_list(reverse=reverse)
     elif return_type == 'pl.dataframe':
-        import polars as pl
-        # pl.DataFrame([{'x': x, 'y': y, 'z': z}, ...])
-        return pl.DataFrame(outputs.to_list(reverse=reverse), infer_schema_length=None)
+        # polars.DataFrame 
+        return outputs.to_polars(reverse=reverse)
     elif return_type in ['pd.dataframe', 'dataframe']:
-        import pandas as pd
-        # pd.DataFrame([{'x': x, 'y': y, 'z': z}, ...])
-        return pd.DataFrame(outputs.to_list(reverse=reverse))
+        # pandas.DataFrame
+        return outputs.to_pandas(reverse=reverse)
     else:
-        raise Exception(f'Not Supported `{return_type=}`')
+        raise ValueError(f'Not Supported {return_type=}')
+
+
         
 def forward_rolling_apply(num: int, obj_cls: Type[rIndicator], param_args: List[Any] = [],
                           param_kwargs: Dict[str, Any] = {},

@@ -82,6 +82,9 @@ class NumpyDeque(object):
                     self._data[:num_current] = self._data[self._start_idx : self._end_idx]
                 self._start_idx = 0
                 self._end_idx = num_current
+    
+    def push(self, value):
+        self.append(value)
 
     def append(self, value): 
         """添加单个值到末尾 | Add a single value to the end"""
@@ -333,6 +336,22 @@ class NumpyDeque(object):
 
 
 NumPyDeque = NumpyDeque
+
+class NumpyVector(NumpyDeque):
+    """NumPy-backed vector (effectively a NumpyDeque with maxlen=None)"""
+    def __init__(self, dtype=np.float64, buffer_factor=None):
+        super().__init__(maxlen=None, dtype=dtype, buffer_factor=buffer_factor)
+
+    def __repr__(self):
+        n = len(self)
+        if n > 16:
+            data_str = f"[{', '.join(map(str, self.values[:8].tolist()))}, ..., {', '.join(map(str, self.values[-8:].tolist()))}]"
+        else:
+            data_str = str(self.values.tolist())
+        return f"NumpyVector({data_str}, len={n}, dtype={self.dtype})"
+
+NumPyVector = NumpyVector
+
 
 # benchmark
 def benchmark(n=1000000, size=100000):

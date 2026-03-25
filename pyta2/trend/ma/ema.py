@@ -10,6 +10,7 @@ class rEMA(rBaseMA):
         assert n > 0, f'{self.name} n must be greater than 0, got {n}'
         self.alpha = 2.0 / (n + 1)
         super(rEMA, self).__init__(n=n, window=n, **kwargs)
+
     
     def reset_extras(self):
         self.ema = None

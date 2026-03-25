@@ -1,13 +1,9 @@
-# import numpy as np
 from .base import rBaseMA
-from ...utils.deque import NumPyDeque
+from ...utils.deque import NumpyDeque
 from .ema import rEMA
 
 class rTEMA(rBaseMA):
     """TEMA
-    
-    TODO:
-        - [ ] 待校验 
 
     reference:
         https://en.wikipedia.org/wiki/Triple_exponential_moving_average
@@ -18,10 +14,10 @@ class rTEMA(rBaseMA):
     def __init__(self, n, **kwargs): 
         assert n > 0, f'{self.name} n must be greater than 0, got {n}'
         self.__ema = rEMA(n) 
-        self.values_ema = NumPyDeque(n) 
+        self.values_ema = NumpyDeque(n) 
 
         self.__ema_ema = rEMA(n)
-        self.values_ema_ema = NumPyDeque(n)
+        self.values_ema_ema = NumpyDeque(n)
 
         self.__ema_ema_ema = rEMA(n)
         super(rTEMA, self).__init__(n=n, window=3*n-2, **kwargs)

@@ -22,9 +22,7 @@ class NumpyDeque(object):
         self._buffer_factor = buffer_factor or self._get_buffer_factor()
         self._cache_size = int(self._maxlen * self._buffer_factor)
         self._dtype = dtype or np.float64
-        print('new NumpyDeque', self._maxlen, self._buffer_factor, self._cache_size, self._dtype)
         self._data = np.empty((self._cache_size,), dtype=dtype) 
-        print('new NumpyDeque', self._data)
         self._start_idx = 0 
         self._end_idx = 0 
         self._view_cache = None 
@@ -49,9 +47,39 @@ class NumpyDeque(object):
         self.push(value)
     
     def extend(self, values):
-        """批量添加值"""
-        for value in values:
-            self.push(value)
+        """批量添加值 | Batch add values (Optimized)"""
+        self._view_cache = None
+        vals = np.asanyarray(values, dtype=self._dtype)
+        num_new = len(vals)
+        if num_new == 0:
+            return
+
+        # 如果新数据已经超过 maxlen，只保留最后 maxlen 个
+        if num_new > self._maxlen:
+            vals = vals[-self._maxlen:]
+            num_new = self._maxlen
+
+        # 检查缓冲区剩余空间
+        if self._end_idx + num_new > self._cache_size:
+            # 空间不足，执行内存平移
+            num_current = self._end_idx - self._start_idx
+            # 如果平移后仍可能溢出 maxlen，更新 start_idx
+            if num_current + num_new > self._maxlen:
+                self._start_idx = self._end_idx - (self._maxlen - num_new)
+                num_current = self._end_idx - self._start_idx
+            
+            if num_current > 0:
+                self._data[:num_current] = self._data[self._start_idx : self._end_idx]
+            self._start_idx = 0
+            self._end_idx = num_current
+
+        # 批量写入
+        self._data[self._end_idx : self._end_idx + num_new] = vals
+        self._end_idx += num_new
+
+        # 维护 maxlen 约束
+        if self._end_idx - self._start_idx > self._maxlen:
+            self._start_idx = self._end_idx - self._maxlen
     
     @staticmethod
     def infer_dtype(value: Any) -> np.dtype:
@@ -111,7 +139,8 @@ class NumpyDeque(object):
         if self._end_idx - self._start_idx > self._maxlen:
             self._start_idx += 1
 
-    def pop(self):
+    def popleft(self):
+        """移除并返回最左侧(最早)的元素 | FIFO"""
         self._view_cache = None
         if self._start_idx >= self._end_idx:
             raise IndexError("pop from empty deque")
@@ -278,7 +307,13 @@ class NumpyDeque(object):
         return self._end_idx - self._start_idx
 
     def __repr__(self):
-        return f"NumPyDeque({self.values.tolist()})"
+        n = len(self)
+        if n > 16:
+            # 缩略显示大数据量
+            data_str = f"[{', '.join(map(str, self.values[:8].tolist()))}, ..., {', '.join(map(str, self.values[-8:].tolist()))}]"
+        else:
+            data_str = str(self.values.tolist())
+        return f"NumpyDeque({data_str}, len={n}, maxlen={self._maxlen}, dtype={self.dtype})"
 
 
 NumPyDeque = NumpyDeque
@@ -330,8 +365,8 @@ def benchmark_set(n=500000, size=10000):
         q.__setitem__(idx, val)
     t2 = time.perf_counter() - start
 
-    print(f"__setitem__  (via values) : {t1:.6f}s")
-    print(f"__setitem_deprecated__ (direct)     : {t2:.6f}s")
+    print(f"__setitem_deprecated__ (direct)     : {t1:.6f}s")
+    print(f"__setitem__  (via values) : {t2:.6f}s")
     
 if __name__ == "__main__":
     if 1:

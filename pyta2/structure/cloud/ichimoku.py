@@ -1,9 +1,8 @@
 import numpy as np
-from ...base import rIndicator
-from ...base.schema import Schema
-from ...utils.space.box import Scalar
-from ...stats import rHigh, rLow
-from ...utils.deque.numpy_deque import NumpyDeque
+from pyta2.base.indicator import rIndicator
+from pyta2.utils.space.box import Box
+from pyta2.stats import rHigh, rLow
+from pyta2.utils.deque import NumpyDeque
 
 
 class rIchimoku_HL(rIndicator):
@@ -20,6 +19,7 @@ class rIchimoku_HL(rIndicator):
         signal:https://www.investopedia.com/terms/i/ichimoku-cloud.asp
         pattern: https://stockcharts.com/docs/doku.php?id=scans%3Aadvanced_scan_syntax%3Aichimoku_scans
     """
+    name = "Ichimoku_HL"
 
     def __init__(self, n1=9, n2=26, n3=52, **kwargs):
         assert n1 < n2 < n3
@@ -37,14 +37,24 @@ class rIchimoku_HL(rIndicator):
         self._leading_Bs = NumpyDeque(maxlen=n2)
         super(rIchimoku_HL, self).__init__(
             window=n3,
-            schema=Schema([
-                ('conversionLine', Scalar()),
-                ('baseLine', Scalar()),
-                ('lA', Scalar()),
-                ('lB', Scalar()),
-            ]),
+            schema=[
+                ('conversionLine', Box(low=-np.inf, high=np.inf, shape=(), dtype=np.float64)),
+                ('baseLine', Box(low=-np.inf, high=np.inf, shape=(), dtype=np.float64)),
+                ('lA', Box(low=-np.inf, high=np.inf, shape=(), dtype=np.float64)),
+                ('lB', Box(low=-np.inf, high=np.inf, shape=(), dtype=np.float64)),
+            ],
             **kwargs
         )
+
+    def reset_extras(self):
+        self._high1.reset()
+        self._low1.reset()
+        self._high2.reset()
+        self._low2.reset()
+        self._high3.reset()
+        self._low3.reset()
+        self._leading_As.clear()
+        self._leading_Bs.clear()
 
     def forward(self, highs, lows):
         high1, low1 = self._high1.rolling(highs), self._low1.rolling(lows)
@@ -56,34 +66,48 @@ class rIchimoku_HL(rIndicator):
 
         # leading span A, 需要延迟 26个点取值
         leading_span_A = (conversion_line + base_line) * 0.5
-        self._leading_As.push(leading_span_A)
+        self._leading_As.append(leading_span_A)
         # leading span B, 需要延迟 26个点取值
         leading_span_B = (high3 + low3) * 0.5
-        self._leading_Bs.push(leading_span_B)
+        self._leading_Bs.append(leading_span_B)
 
         if len(highs) < self.n3:
             return np.nan, np.nan, np.nan, np.nan
 
         lA, lB = self._leading_As[-self.n2], self._leading_Bs[-self.n2]
-        # 忽略close滞后LagSpan, 因为当前值永远是nan，改变的是值
-        # 使用是需要，把close滞后26周期即可
         return conversion_line, base_line, lA, lB
+
+    @property
+    def full_name(self):
+        return f'{self.name}({self.n1},{self.n2},{self.n3})'
 
 
 class rIchimoku(rIndicator):
+    """Ichimoku Kinko Hyo"""
+    name = "Ichimoku"
 
     def __init__(self, n1=9, n2=26, n3=52, **kwargs):
+        self.n1 = n1
+        self.n2 = n2
+        self.n3 = n3
         self.__ichimoku_hl = rIchimoku_HL(n1, n2, n3)
         super(rIchimoku, self).__init__(
             window=n3,
-            schema=Schema([
-                ('conversionLine', Scalar()),
-                ('baseLine', Scalar()),
-                ('lA', Scalar()),
-                ('lB', Scalar()),
-            ]),
+            schema=[
+                ('conversionLine', Box(low=-np.inf, high=np.inf, shape=(), dtype=np.float64)),
+                ('baseLine', Box(low=-np.inf, high=np.inf, shape=(), dtype=np.float64)),
+                ('lA', Box(low=-np.inf, high=np.inf, shape=(), dtype=np.float64)),
+                ('lB', Box(low=-np.inf, high=np.inf, shape=(), dtype=np.float64)),
+            ],
             **kwargs
         )
 
+    def reset_extras(self):
+        self.__ichimoku_hl.reset()
+
     def forward(self, values):
         return self.__ichimoku_hl.rolling(values, values)
+
+    @property
+    def full_name(self):
+        return f'{self.name}({self.n1},{self.n2},{self.n3})'

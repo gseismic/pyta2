@@ -1,7 +1,7 @@
 import numpy as np
-from ...base import rIndicator
-from ...utils.deque import NumpyDeque
-from ...utils.space import Scalar, PositiveScalar
+from pyta2.base import rIndicator
+from pyta2.utils.deque import NumpyDeque
+from pyta2.utils.space import Scalar, PositiveScalar
 
 
 class rZigZagBase(rIndicator):

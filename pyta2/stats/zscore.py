@@ -1,23 +1,22 @@
 import numpy as np
-from ..base import rIndicator
-from ..base.schema import Schema
-from ..utils.space.box import Scalar
+from ..base.indicator import rIndicator
+from ..utils.space.box import Box
 
-__all__ = ['rZScore']
 
 class rZScore(rIndicator):
+    """Rolling Z-Score (Standard Score)"""
     name = 'ZScore'
 
     def __init__(self, n, **kwargs):
-        assert n >= 2, f'{self.name} window must be greater than 2, got {n}'
+        assert n > 1, f'{self.name} n must be greater than 1, got {n}'
         self.n = n 
         super(rZScore, self).__init__(
-            window=self.n,
-            schema=Schema([
-                ('zscore', Scalar(dtype=np.float64)),
-                ('mu', Scalar(dtype=np.float64)),
-                ('std', Scalar(dtype=np.float64))
-            ]),
+            window=n,
+            schema=[
+                ('zscore', Box(low=-np.inf, high=np.inf, shape=(), dtype=np.float64)),
+                ('mu', Box(low=-np.inf, high=np.inf, shape=(), dtype=np.float64)),
+                ('std', Box(low=0.0, high=np.inf, shape=(), dtype=np.float64)),
+            ],
             **kwargs
         )
 
@@ -25,17 +24,19 @@ class rZScore(rIndicator):
         pass
 
     def forward(self, values):
-        if len(values) < self.required_window:
+        if len(values) < self.n:
             return np.nan, np.nan, np.nan
         
-        mu = np.mean(values[-self.n:], axis=-1)
-        std = np.std(values[-self.n:], axis=-1)
+        subset = values[-self.n:]
+        mu = np.mean(subset, axis=-1)
+        std = np.std(subset, axis=-1)
+        
+        if std == 0:
+            return 0.0, mu, std
+            
         zscore = (values[-1] - mu) / std
-        # print(f'\t{values[-1]=}\t{mu=}\t{std=}\t{zscore=}')
         return zscore, mu, std
 
     @property
     def full_name(self):
-        return f'ZScore({self.n})'
-    
-    
+        return f'{self.name}({self.n})'

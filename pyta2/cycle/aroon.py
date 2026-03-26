@@ -1,7 +1,6 @@
 import numpy as np
-from ...base import rIndicator
-from ...base.schema import Schema
-from ...utils.space.box import Scalar
+from pyta2.base.indicator import rIndicator
+from pyta2.utils.space.box import Box
 
 
 class rAroon(rIndicator):
@@ -12,29 +11,41 @@ class rAroon(rIndicator):
         https://www.investopedia.com/terms/a/aroonoscillator.asp
         使用: 双aroon: https://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:aroon_oscillator
     """
+    name = "Aroon"
 
     def __init__(self, n=25, **kwargs):
-        assert (n >= 1)
+        assert n >= 1, f'{self.name} window n must be at least 1, got {n}'
         self.n = n
-        self.iloc_max = None
-        self.iloc_min = None
         super(rAroon, self).__init__(
             window=n,
-            schema=Schema([
-                ('high_elapsed', Scalar()),
-                ('low_elapsed', Scalar()),
-            ]),
+            schema=[
+                ('high_elapsed', Box(low=0.0, high=100.0, shape=(), dtype=np.float64)),
+                ('low_elapsed', Box(low=0.0, high=100.0, shape=(), dtype=np.float64)),
+            ],
             **kwargs
         )
 
+    def reset_extras(self):
+        pass
+
     def forward(self, values):
-        # 单摆的相对位置, ma 是单摆的中心点
         if len(values) < self.n:
             return np.nan, np.nan
-        self.iloc_max = np.argmax(values[-self.n:])
-        self.iloc_min = np.argmin(values[-self.n:])
-        high_elapsed = 100*self.iloc_max/(self.n-1)
-        low_elapsed = 100*self.iloc_min/(self.n-1)
-        # diff = high_elapsed - low_elapsed
-        # return high_elapsed, low_elapsed, diff
+            
+        subset = values[-self.n:]
+        # iloc_max 从0到n-1
+        iloc_max = np.argmax(subset)
+        iloc_min = np.argmin(subset)
+        
+        # Aroon公式：((N - 至今最高价天数) / N) * 100
+        # 至今最高价天数 = (n-1) - iloc_max
+        # 结果：(n - 1 - ((n-1) - iloc_max)) / (n-1) * 100 = iloc_max / (n-1) * 100
+        n_m_1 = self.n - 1 if self.n > 1 else 1.0
+        high_elapsed = 100 * iloc_max / n_m_1
+        low_elapsed = 100 * iloc_min / n_m_1
+        
         return high_elapsed, low_elapsed
+
+    @property
+    def full_name(self):
+        return f'{self.name}({self.n})'

@@ -42,10 +42,10 @@ class rTEMA(rBaseMA):
             float: TEMA value
         """
         value_ema = self.__ema.rolling(values)
-        self.values_ema.push(value_ema)
+        self.values_ema.append(value_ema)
 
         value_ema_ema = self.__ema_ema.rolling(self.values_ema.values)
-        self.values_ema_ema.push(value_ema_ema)
+        self.values_ema_ema.append(value_ema_ema)
 
         value_ema_ema_ema = self.__ema_ema_ema.rolling(self.values_ema_ema.values)
         return 3.0*value_ema - 3.0*value_ema_ema + value_ema_ema_ema

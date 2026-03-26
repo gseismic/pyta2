@@ -1,5 +1,5 @@
 import numpy as np
-from .utils import IndicatorFunc1Call_XXX
+from .utils import IndicatorFunc1Call
 
 def calculate_weights(n, weights=None):
     """
@@ -60,88 +60,88 @@ def calculate_weights(n, weights=None):
     
     return w / np.sum(w)  # 归一化
 
-class rStd(IndicatorFunc1Call_XXX):
+class rStd(IndicatorFunc1Call):
     """
     rolling std
     """
     name = 'Std'
     def __init__(self, n, *args, **kwargs):
         callback = lambda values: np.std(values[-self.n:], axis=-1)
-        super(rStd, self).__init__(callback, n, *args, **kwargs)
+        super(rStd, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rMean(IndicatorFunc1Call_XXX):
+class rMean(IndicatorFunc1Call):
     """
     rolling mean
     """
     name = 'Mean'
     def __init__(self, n, *args, **kwargs):
         callback = lambda values: np.mean(values[-self.n:], axis=-1)
-        super(rMean, self).__init__(callback, n, *args, **kwargs)
+        super(rMean, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rMedian(IndicatorFunc1Call_XXX):
+class rMedian(IndicatorFunc1Call):
     """
     rolling median
     """
     name = 'Median'
     def __init__(self, n, *args, **kwargs):
         callback = lambda values: np.median(values[-self.n:], axis=-1)
-        super(rMedian, self).__init__(callback, n, *args, **kwargs)
+        super(rMedian, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rMin(IndicatorFunc1Call_XXX):
+class rMin(IndicatorFunc1Call):
     """
     rolling min
     """
     name = 'Min'
     def __init__(self, n, *args, **kwargs):
         callback = lambda values: np.min(values[-self.n:], axis=-1)
-        super(rMin, self).__init__(callback, n, *args, **kwargs)
+        super(rMin, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rMax(IndicatorFunc1Call_XXX):
+class rMax(IndicatorFunc1Call):
     """
     rolling max
     """
     name = 'Max'
     def __init__(self, n, *args, **kwargs):
         callback = lambda values: np.max(values[-self.n:], axis=-1)
-        super(rMax, self).__init__(callback, n, *args, **kwargs)
+        super(rMax, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rSum(IndicatorFunc1Call_XXX):
+class rSum(IndicatorFunc1Call):
     """
     rolling sum
     """
     name = 'Sum'
     def __init__(self, n, *args, **kwargs):
         callback = lambda values: np.sum(values[-self.n:], axis=-1)
-        super(rSum, self).__init__(callback, n, *args, **kwargs)
+        super(rSum, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rVar(IndicatorFunc1Call_XXX):
+class rVar(IndicatorFunc1Call):
     """
     rolling variance (方差)
     """
     name = 'Var'
     def __init__(self, n, *args, **kwargs):
         callback = lambda values: np.var(values[-self.n:], axis=-1)
-        super(rVar, self).__init__(callback, n, *args, **kwargs)
+        super(rVar, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rSkew(IndicatorFunc1Call_XXX):
+class rSkew(IndicatorFunc1Call):
     """
     rolling skewness (偏度)
     """
     name = 'Skew'
     def __init__(self, n, *args, **kwargs):
         callback = lambda values: np.nanmean(((values[-self.n:] - np.nanmean(values[-self.n:])) / np.nanstd(values[-self.n:]))**3)
-        super(rSkew, self).__init__(callback, n, *args, **kwargs)
+        super(rSkew, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rKurt(IndicatorFunc1Call_XXX):
+class rKurt(IndicatorFunc1Call):
     """
     rolling kurtosis (峰度)
     """
     name = 'Kurt'
     def __init__(self, n, *args, **kwargs):
         callback = lambda values: np.nanmean(((values[-self.n:] - np.nanmean(values[-self.n:])) / np.nanstd(values[-self.n:]))**4)
-        super(rKurt, self).__init__(callback, n, *args, **kwargs)
+        super(rKurt, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rQuantile(IndicatorFunc1Call_XXX):
+class rQuantile(IndicatorFunc1Call):
     """
     rolling quantile (分位数)
     """
@@ -149,9 +149,9 @@ class rQuantile(IndicatorFunc1Call_XXX):
     def __init__(self, n, q=0.5, *args, **kwargs):
         self.q = q
         callback = lambda values: np.quantile(values[-self.n:], q, axis=-1)
-        super(rQuantile, self).__init__(callback, n, *args, **kwargs)
+        super(rQuantile, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rPercentile(IndicatorFunc1Call_XXX):
+class rPercentile(IndicatorFunc1Call):
     """
     rolling percentile (百分位数)
     """
@@ -159,36 +159,36 @@ class rPercentile(IndicatorFunc1Call_XXX):
     def __init__(self, n, q=0.5, *args, **kwargs):
         self.q = q
         callback = lambda values: np.percentile(values[-self.n:], q, axis=-1)
-        super(rPercentile, self).__init__(callback, n, *args, **kwargs)
+        super(rPercentile, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rCumSum(IndicatorFunc1Call_XXX):
+class rCumSum(IndicatorFunc1Call):
     """
     rolling cumulative sum
     """
     name = 'CumSum'
     def __init__(self, n, *args, **kwargs):
         callback = lambda values: np.cumsum(values[-self.n:], axis=-1)
-        super(rCumSum, self).__init__(callback, n, *args, **kwargs)
+        super(rCumSum, self).__init__(callback, n, name=self.name, **kwargs)
         
-class rCumProd(IndicatorFunc1Call_XXX):
+class rCumProd(IndicatorFunc1Call):
     """
     rolling cumulative product
     """
     name = 'CumProd'
     def __init__(self, n, *args, **kwargs):
         callback = lambda values: np.cumprod(values[-self.n:], axis=-1)
-        super(rCumProd, self).__init__(callback, n, *args, **kwargs)
+        super(rCumProd, self).__init__(callback, n, name=self.name, **kwargs)
         
-class rPTP(IndicatorFunc1Call_XXX):
+class rPTP(IndicatorFunc1Call):
     """
     rolling peak to peak (峰峰值)
     """
     name = 'PTP'
     def __init__(self, n, *args, **kwargs):
         callback = lambda values: np.ptp(values[-self.n:], axis=-1)
-        super(rPTP, self).__init__(callback, n, *args, **kwargs)
+        super(rPTP, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rNorm(IndicatorFunc1Call_XXX):
+class rNorm(IndicatorFunc1Call):
     """
     rolling norm (范数)
     """
@@ -196,9 +196,9 @@ class rNorm(IndicatorFunc1Call_XXX):
     def __init__(self, n, ord=None, *args, **kwargs):
         self.ord = ord
         callback = lambda values: np.linalg.norm(values[-self.n:], ord=self.ord)
-        super(rNorm, self).__init__(callback, n, *args, **kwargs)
+        super(rNorm, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rEntropy(IndicatorFunc1Call_XXX):
+class rEntropy(IndicatorFunc1Call):
     """
     rolling entropy (信息熵)
     """
@@ -209,45 +209,45 @@ class rEntropy(IndicatorFunc1Call_XXX):
             hist = hist[hist > 0]
             return -np.sum(hist * np.log(hist))
         callback = lambda values: calc_entropy(values[-self.n:])
-        super(rEntropy, self).__init__(callback, n, *args, **kwargs)
+        super(rEntropy, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rKurtosisExcess(IndicatorFunc1Call_XXX):
+class rKurtosisExcess(IndicatorFunc1Call):
     """
     rolling excess kurtosis (超额峰度)
     """
     name = 'KurtosisExcess'
     def __init__(self, n, *args, **kwargs):
         callback = lambda values: np.nanmean(((values[-self.n:] - np.nanmean(values[-self.n:])) / np.nanstd(values[-self.n:]))**4) - 3
-        super(rKurtosisExcess, self).__init__(callback, n, *args, **kwargs)
+        super(rKurtosisExcess, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rGeoMean(IndicatorFunc1Call_XXX):
+class rGeoMean(IndicatorFunc1Call):
     """
     rolling geometric mean (几何平均数)
     """
     name = 'GeoMean'
     def __init__(self, n, *args, **kwargs):
         callback = lambda values: np.exp(np.mean(np.log(np.abs(values[-self.n:]))))
-        super(rGeoMean, self).__init__(callback, n, *args, **kwargs)
+        super(rGeoMean, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rHarmonicMean(IndicatorFunc1Call_XXX):
+class rHarmonicMean(IndicatorFunc1Call):
     """
     rolling harmonic mean (调和平均数)
     """
     name = 'HarmonicMean'
     def __init__(self, n, *args, **kwargs):
         callback = lambda values: 1 / np.mean(1 / values[-self.n:])
-        super(rHarmonicMean, self).__init__(callback, n, *args, **kwargs)
+        super(rHarmonicMean, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rMode(IndicatorFunc1Call_XXX):
+class rMode(IndicatorFunc1Call):
     """
     rolling mode (众数)
     """
     name = 'Mode'
     def __init__(self, n, *args, **kwargs):
         callback = lambda values: float(np.bincount(values[-self.n:].astype(int)).argmax())
-        super(rMode, self).__init__(callback, n, *args, **kwargs)
+        super(rMode, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rSemiVariance(IndicatorFunc1Call_XXX):
+class rSemiVariance(IndicatorFunc1Call):
     """
     rolling semi-variance (半方差)
     """
@@ -257,27 +257,27 @@ class rSemiVariance(IndicatorFunc1Call_XXX):
             mean = np.mean(values)
             return np.mean(np.square(np.minimum(values - mean, 0)))
         callback = lambda values: calc_semi_var(values[-self.n:])
-        super(rSemiVariance, self).__init__(callback, n, *args, **kwargs)
+        super(rSemiVariance, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rMAD(IndicatorFunc1Call_XXX):
+class rMAD(IndicatorFunc1Call):
     """
     rolling Median Absolute Deviation (中位数绝对偏差)
     """
     name = 'MAD'
     def __init__(self, n, *args, **kwargs):
         callback = lambda values: np.median(np.abs(values[-self.n:] - np.median(values[-self.n:])))
-        super(rMAD, self).__init__(callback, n, *args, **kwargs)
+        super(rMAD, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rRMS(IndicatorFunc1Call_XXX):
+class rRMS(IndicatorFunc1Call):
     """
     rolling Root Mean Square (均方根)
     """
     name = 'RMS'
     def __init__(self, n, *args, **kwargs):
         callback = lambda values: np.sqrt(np.mean(np.square(values[-self.n:])))
-        super(rRMS, self).__init__(callback, n, *args, **kwargs)
+        super(rRMS, self).__init__(callback, n, name=self.name, **kwargs)
         
-class rWMean(IndicatorFunc1Call_XXX):
+class rWMean(IndicatorFunc1Call):
     """
     rolling weighted mean (加权平均数)
     weights参数支持:
@@ -290,9 +290,9 @@ class rWMean(IndicatorFunc1Call_XXX):
     def __init__(self, n, weights=None, *args, **kwargs):
         self.weights = calculate_weights(n, weights)
         callback = lambda values: np.sum(values[-self.n:] * self.weights)
-        super(rWMean, self).__init__(callback, n, *args, **kwargs)
+        super(rWMean, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rEWMA(IndicatorFunc1Call_XXX):
+class rEWMA(IndicatorFunc1Call):
     """
     rolling exponentially weighted moving average (指数加权移动平均)
     alpha: 平滑系数 (0,1]，越大表示近期数据权重越高
@@ -306,9 +306,9 @@ class rEWMA(IndicatorFunc1Call_XXX):
             return np.sum(values[-self.n:] * weights)
             
         callback = calc_ewma
-        super(rEWMA, self).__init__(callback, n, *args, **kwargs)
+        super(rEWMA, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rWStd(IndicatorFunc1Call_XXX):
+class rWStd(IndicatorFunc1Call):
     """
     rolling weighted standard deviation (加权标准差)
     weights参数支持同rWMean
@@ -320,9 +320,9 @@ class rWStd(IndicatorFunc1Call_XXX):
             wmean = np.sum(values[-self.n:] * self.weights)
             return np.sqrt(np.sum(self.weights * (values[-self.n:] - wmean) ** 2))
         callback = calc_wstd
-        super(rWStd, self).__init__(callback, n, *args, **kwargs)
+        super(rWStd, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rWVar(IndicatorFunc1Call_XXX):
+class rWVar(IndicatorFunc1Call):
     """
     rolling weighted variance (加权方差)
     weights参数支持:
@@ -338,9 +338,9 @@ class rWVar(IndicatorFunc1Call_XXX):
             wmean = np.sum(values[-self.n:] * self.weights)
             return np.sum(self.weights * (values[-self.n:] - wmean) ** 2)
         callback = calc_wvar
-        super(rWVar, self).__init__(callback, n, *args, **kwargs)
+        super(rWVar, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rWSkew(IndicatorFunc1Call_XXX):
+class rWSkew(IndicatorFunc1Call):
     """
     rolling weighted skewness (加权偏度)
     weights参数支持同rWMean
@@ -354,9 +354,9 @@ class rWSkew(IndicatorFunc1Call_XXX):
             wstd = np.sqrt(wvar)
             return np.sum(self.weights * ((values[-self.n:] - wmean) / wstd) ** 3)
         callback = calc_wskew
-        super(rWSkew, self).__init__(callback, n, *args, **kwargs)
+        super(rWSkew, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rWKurt(IndicatorFunc1Call_XXX):
+class rWKurt(IndicatorFunc1Call):
     """
     rolling weighted kurtosis (加权峰度)
     weights参数支持同rWMean
@@ -370,9 +370,9 @@ class rWKurt(IndicatorFunc1Call_XXX):
             wstd = np.sqrt(wvar)
             return np.sum(self.weights * ((values[-self.n:] - wmean) / wstd) ** 4)
         callback = calc_wkurt
-        super(rWKurt, self).__init__(callback, n, *args, **kwargs)
+        super(rWKurt, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rWQuantile(IndicatorFunc1Call_XXX):
+class rWQuantile(IndicatorFunc1Call):
     """
     rolling weighted quantile (加权分位数)
     weights参数支持同rWMean
@@ -388,9 +388,9 @@ class rWQuantile(IndicatorFunc1Call_XXX):
             idx = np.searchsorted(cumsum_weights, self.q)
             return values[sorted_idx[idx]]
         callback = lambda values: weighted_quantile(values[-self.n:])
-        super(rWQuantile, self).__init__(callback, n, *args, **kwargs)
+        super(rWQuantile, self).__init__(callback, n, name=self.name, **kwargs)
         
-class rWMAD(IndicatorFunc1Call_XXX):
+class rWMAD(IndicatorFunc1Call):
     """
     rolling weighted Median Absolute Deviation (加权中位数绝对偏差)
     weights参数支持同rWMean
@@ -403,9 +403,9 @@ class rWMAD(IndicatorFunc1Call_XXX):
             deviations = np.abs(values[-self.n:] - wmedian)
             return weighted_quantile(deviations, 0.5, self.weights)
         callback = calc_wmad
-        super(rWMAD, self).__init__(callback, n, *args, **kwargs)
+        super(rWMAD, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rWRMS(IndicatorFunc1Call_XXX):
+class rWRMS(IndicatorFunc1Call):
     """
     rolling weighted Root Mean Square (加权均方根)
     weights参数支持同rWMean
@@ -414,9 +414,9 @@ class rWRMS(IndicatorFunc1Call_XXX):
     def __init__(self, n, weights=None, *args, **kwargs):
         self.weights = calculate_weights(n, weights)
         callback = lambda values: np.sqrt(np.sum(self.weights * np.square(values[-self.n:])))
-        super(rWRMS, self).__init__(callback, n, *args, **kwargs)
+        super(rWRMS, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rWSemiVariance(IndicatorFunc1Call_XXX):
+class rWSemiVariance(IndicatorFunc1Call):
     """
     rolling weighted semi-variance (加权半方差)
     weights参数支持同rWMean
@@ -428,9 +428,9 @@ class rWSemiVariance(IndicatorFunc1Call_XXX):
             wmean = np.sum(values[-self.n:] * self.weights)
             return np.sum(self.weights * np.square(np.minimum(values[-self.n:] - wmean, 0)))
         callback = calc_wsemi_var
-        super(rWSemiVariance, self).__init__(callback, n, *args, **kwargs)
+        super(rWSemiVariance, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rWGeoMean(IndicatorFunc1Call_XXX):
+class rWGeoMean(IndicatorFunc1Call):
     """
     rolling weighted geometric mean (加权几何平均数)
     weights参数支持同rWMean
@@ -439,9 +439,9 @@ class rWGeoMean(IndicatorFunc1Call_XXX):
     def __init__(self, n, weights=None, *args, **kwargs):
         self.weights = calculate_weights(n, weights)
         callback = lambda values: np.exp(np.sum(self.weights * np.log(np.abs(values[-self.n:]))))
-        super(rWGeoMean, self).__init__(callback, n, *args, **kwargs)
+        super(rWGeoMean, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rWHarmonicMean(IndicatorFunc1Call_XXX):
+class rWHarmonicMean(IndicatorFunc1Call):
     """
     rolling weighted harmonic mean (加权调和平均数)
     weights参数支持同rWMean
@@ -450,9 +450,9 @@ class rWHarmonicMean(IndicatorFunc1Call_XXX):
     def __init__(self, n, weights=None, *args, **kwargs):
         self.weights = calculate_weights(n, weights)
         callback = lambda values: 1 / np.sum(self.weights / values[-self.n:])
-        super(rWHarmonicMean, self).__init__(callback, n, *args, **kwargs)
+        super(rWHarmonicMean, self).__init__(callback, n, name=self.name, **kwargs)
 
-class rWEntropy(IndicatorFunc1Call_XXX):
+class rWEntropy(IndicatorFunc1Call):
     """
     rolling weighted entropy (加权信息熵)
     weights参数支持同rWMean
@@ -465,7 +465,7 @@ class rWEntropy(IndicatorFunc1Call_XXX):
             hist = hist[hist > 0]
             return -np.sum(hist * np.log(hist))
         callback = calc_wentropy
-        super(rWEntropy, self).__init__(callback, n, *args, **kwargs)
+        super(rWEntropy, self).__init__(callback, n, name=self.name, **kwargs)
 
 def weighted_quantile(values, q, weights):
     """

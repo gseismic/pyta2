@@ -1,5 +1,5 @@
 import numpy as np
-from ...base import forward_rolling_apply
+from pyta2.base import forward_rolling_apply
 from ._rolling import rZigZag, rZigZag_HL, rZigZag_Unit, rZigZag_HL_Unit
 
 def ZigZag(closes, delta, use_pct=True, **kwargs):

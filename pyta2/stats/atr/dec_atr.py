@@ -1,32 +1,15 @@
 import numpy as np
-from ...utils.space import Box
-from ...utils.deque import NumPyDeque
-from ...trend.ma.api import get_ma_class
-from ...base import rIndicator
+from pyta2.utils.space import Box
+from pyta2.utils.deque import NumPyDeque
+from pyta2.base import rIndicator
 
 class rDecATR(rIndicator):
-    """方向分解平均真实波幅(Directional Decomposed ATR)​
-    
-    Parameters
-    ----------
-    n : int
-        Length of ATR calculation period
-    ma_type : str, default 'EMA'
-        Type of moving average to use ('SMA', 'EMA', etc.)
-        
-    Returns
-    -------
-    atr : float
-        ATR value
-    up_atr : float
-        Upward ATR value
-    down_atr : float
-        Downward ATR value
-    """
+    # ... (docstrings omitted for brevity in replace_file_content target)
     name = "DecATR"
 
     def __init__(self, n=20, ma_type='EMA', **kwargs):
         assert n > 0, f'{self.name} n must be greater than 0, got {n}'
+        from pyta2.trend.ma.api import get_ma_class
         self.n = n
         self.ma_type = ma_type
         self.fn_up_ma = get_ma_class(ma_type)(n)

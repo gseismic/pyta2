@@ -1,8 +1,6 @@
 import numpy as np
-from ..base import rIndicator
-from ..base.schema import Schema
-from ..utils.space.box import Scalar
-from ..trend._moving import mEMA, mSMA
+from ..base.indicator import rIndicator
+from ..utils.space.box import Box
 
 
 class rTTI(rIndicator):
@@ -29,49 +27,70 @@ class rTTI(rIndicator):
             过小: 下跌动力枯竭
             相等: 震荡
     """
+    name = "TTI"
 
-    def __init__(self, n, ma_type=None, gap_factor=1, **kwargs):
+    def __init__(self, n, ma_type='ema', gap_factor=1, **kwargs):
         # SMA: 震荡思想, 反映的思想是： 涨久易跌，跌久易涨
         # EMA: 趋势思想, 反映近期趋势
-        assert ma_type is None or ma_type.lower() in ['sma', 'ema']
-        self.ma_type = ma_type or 'ema'
-        self.gap_factor = gap_factor
-        self.fn_ma = mEMA if self.ma_type.lower() == 'ema' else mSMA
+        assert ma_type.lower() in ['sma', 'ema']
         self.n = n
-        self.fn_up_ma = self.fn_ma(n)
-        self.fn_down_ma = self.fn_ma(n)
+        self.ma_type = ma_type.lower()
+        self.gap_factor = gap_factor
+        # 内部增量 EMA 逻辑
+        self._ua_ma_val = None
+        self._da_ma_val = None
+        self.alpha = 2.0 / (n + 1)
+        
         super(rTTI, self).__init__(
             window=n,
-            schema=Schema([
-                ('rti', Scalar()),
-                ('uat', Scalar()),
-                ('dat', Scalar()),
-            ]),
+            schema=[
+                ('rti', Box(low=0.0, high=100.0, shape=(), dtype=np.float64)),
+                ('uat', Box(low=0.0, high=np.inf, shape=(), dtype=np.float64)),
+                ('dat', Box(low=0.0, high=np.inf, shape=(), dtype=np.float64)),
+            ],
             **kwargs
         )
 
+    def reset_extras(self):
+        self._ua_ma_val = None
+        self._da_ma_val = None
+
+    def _update_ma(self, ma_val, current_val):
+        if ma_val is None or np.isnan(ma_val):
+            return current_val
+        return (current_val - ma_val) * self.alpha + ma_val
+
     def forward(self, opens, highs, lows, closes):
-        '''
+        """
         return:
             rti: relative time-strength index
             uat: up absolute time
             dat: down absolute time
-        '''
-        gap = opens[-1] - closes[-2] if len(closes) > 1 else .0
-        up = highs[-1] - lows[-1] - \
-            np.max(opens[-1] - closes[-1], 0) + \
-            self.gap_factor * np.max(gap, 0)
-        down = highs[-1] - lows[-1] - \
-            np.max(closes[-1] - opens[-1], 0) + \
-            self.gap_factor * np.max(-gap, 0)
+        """
+        if len(closes) < 2:
+            return np.nan, np.nan, np.nan
+            
+        gap = opens[-1] - closes[-2]
+        up = highs[-1] - lows[-1] - max(opens[-1] - closes[-1], 0) + self.gap_factor * max(gap, 0)
+        down = highs[-1] - lows[-1] - max(closes[-1] - opens[-1], 0) + self.gap_factor * max(-gap, 0)
         total = up + down
 
-        up_ratio = up/total if total != 0 else 0.5
-        up_time = 1 * up_ratio
-        down_time = 1 - up_time
+        up_ratio = up / total if total != 0 else 0.5
+        up_time = up_ratio
+        down_time = 1.0 - up_time
 
-        uat = self.fn_up_ma.moving(up_time)
-        dat = self.fn_down_ma.moving(down_time)
+        self._ua_ma_val = self._update_ma(self._ua_ma_val, up_time)
+        self._da_ma_val = self._update_ma(self._da_ma_val, down_time)
 
-        rti = uat/(uat + dat) * 100
+        if len(closes) < self.window:
+            return np.nan, np.nan, np.nan
+
+        uat = self._ua_ma_val
+        dat = self._da_ma_val
+
+        rti = uat / (uat + dat) * 100 if (uat + dat) != 0 else 50.0
         return rti, uat, dat
+
+    @property
+    def full_name(self):
+        return f'{self.name}({self.n})'

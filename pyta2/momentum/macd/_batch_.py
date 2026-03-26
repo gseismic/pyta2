@@ -1,5 +1,5 @@
 import numpy as np
-from ...base import forward_rolling_apply
+from pyta2.base import forward_rolling_apply
 from ._rolling_ import rMACD
 
 def MACD(values, n1=26, n2=12, n3=9, **kwargs):

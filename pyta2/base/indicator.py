@@ -46,7 +46,6 @@ class rIndicator(ABC):
         self.resize_buffer(buffer_size)
 
         # self.father_indicator = None 
-        self._meta_info = None
         self.reset() 
     
     def resize_buffer(self, buffer_size: Optional[int]):
@@ -70,7 +69,6 @@ class rIndicator(ABC):
         self.g_index = -1
         if self._outputs is not None:
             self._outputs.clear()
-        self._meta_info = None
         self.reset_extras()
     
     def rolling(self, *args, **kwargs):
@@ -127,16 +125,15 @@ class rIndicator(ABC):
         
     @property
     def meta_info(self):
-        if self._meta_info is None:
-            self._meta_info = {
-                'name': self.name,
-                'full_name': self.full_name,
-                'schema': self.schema,
-                'window': self.window,
-                'extra_window': self.extra_window,
-                'required_window': self.required_window,
-                'buffer_size': self.buffer_size,
-                'buffer_factor': self.buffer_factor,
-                'g_index': self.g_index,
-            }
-        return self._meta_info
+        return {
+            'name': self.name,
+            'full_name': self.full_name,
+            'schema': self.schema,
+            'window': self.window,
+            'extra_window': self.extra_window,
+            'required_window': self.required_window,
+            'buffer_size': self.buffer_size,
+            'buffer_factor': self.buffer_factor,
+            'return_dict': self.return_dict,
+            'g_index': self.g_index,
+        }

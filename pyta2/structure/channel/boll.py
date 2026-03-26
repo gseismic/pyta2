@@ -1,25 +1,22 @@
 import numpy as np
-from ...base import rIndicator
-from ...base.schema import Schema
-from ...utils.space.box import Scalar
+from pyta2.base.indicator import rIndicator
+from pyta2.utils.space.box import Box
 
 class rBoll(rIndicator):
     name = "Boll"
 
     def __init__(self, n=20, F=2, **kwargs):
-        if n < 1:
-            raise ValueError(f'{self.name} n must be greater than 0, got {n}')
-        if F <= 0:
-            raise ValueError(f'{self.name} F must be greater than 0, got {F}')
+        assert n > 0, f'{self.name} n must be greater than 0, got {n}'
+        assert F > 0, f'{self.name} F must be greater than 0, got {F}'
         self.n = n
         self.F = F
         super(rBoll, self).__init__(
             window=self.n,
-            schema=Schema([
-                ('ub', Scalar()),
-                ('mid', Scalar()),
-                ('lb', Scalar()),
-            ]),
+            schema=[
+                ('ub', Box(low=-np.inf, high=np.inf, shape=(), dtype=np.float64)),
+                ('mid', Box(low=-np.inf, high=np.inf, shape=(), dtype=np.float64)),
+                ('lb', Box(low=-np.inf, high=np.inf, shape=(), dtype=np.float64)),
+            ],
             **kwargs
         )
            
@@ -27,7 +24,7 @@ class rBoll(rIndicator):
         pass
        
     def forward(self, values):
-        if len(values) < self.required_window:
+        if len(values) < self.n:
             return np.nan, np.nan, np.nan
         mid = np.mean(values[-self.n:])
         std = np.std(values[-self.n:])

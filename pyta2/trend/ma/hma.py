@@ -41,7 +41,3 @@ class rHMA(rBaseMA):
         # Use full history slice provided by rolling apply
         self._compute_raw_hma(values)
         return self.fn_wma3.rolling(self.__raw_hma.values)
-
-    @property
-    def full_name(self):
-        return f'{self.name}({self.n})'

@@ -1,24 +1,23 @@
 import numpy as np
-import scipy.stats
-from ..base import rIndicator
-from ..base.schema import Schema
-from ..utils.space.box import Scalar
+from ..base.indicator import rIndicator
+from ..utils.space.box import Box
 
 
 class rCorr(rIndicator):
+    """Correlation - 相关系数
+    
+    计算两组数值在滚动窗口内的 Pearson 相关系数。
+    """
+    name = 'Corr'
 
-    def __init__(self, n, method='pearson', **kwargs):
-        assert n >= 1, f'{self.name} window must be greater than 1, got {n}'
-        assert method in ['pearson', 'spearman', 'kendall'], (
-            f'{self.name} method must be one of [pearson, spearman, kendall], got {method}'
-        )
-        self.n = n 
-        self.method = method
+    def __init__(self, n, **kwargs):
+        assert n >= 2
+        self.n = n
         super(rCorr, self).__init__(
             window=n,
-            schema=Schema([
-                ('corr', Scalar(dtype=np.float64))
-            ]),
+            schema=[
+                ('corr', Box(low=-1.0, high=1.0, shape=(), dtype=np.float64)),
+            ],
             **kwargs
         )
 
@@ -26,16 +25,13 @@ class rCorr(rIndicator):
         pass
 
     def forward(self, values1, values2):
-        if len(values1) < self.required_window or len(values2) < self.required_window:
+        if len(values1) < self.n or len(values2) < self.n:
             return np.nan
         
-        if self.method == 'pearson':
-            return np.corrcoef(values1[-self.n:], values2[-self.n:])[0, 1]
-        elif self.method == 'spearman':
-            return scipy.stats.spearmanr(values1[-self.n:], values2[-self.n:])[0]
-        elif self.method == 'kendall':
-            return scipy.stats.kendalltau(values1[-self.n:], values2[-self.n:])[0]
+        # 使用 np.corrcoef
+        c = np.corrcoef(values1[-self.n:], values2[-self.n:])
+        return c[0, 1]
 
     @property
     def full_name(self):
-        return f'Corr({self.n},{self.method})'
+        return f'{self.name}({self.n})'

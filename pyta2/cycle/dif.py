@@ -1,25 +1,32 @@
-from ..base import rIndicator
-from ..base.schema import Schema
-from ..utils.space.box import Scalar
-from ._moving import mLag
+import numpy as np
+from ..base.indicator import rIndicator
+from ..utils.space.box import Box
 
 
 class rDif(rIndicator):
-    """延迟线
-    """
+    """差分线 (First-order difference)"""
+    name = "Dif"
 
-    def __init__(self, n, **kwargs):
-        # 0, window-1 数据为nan
-        assert n >= 0
+    def __init__(self, n=1, **kwargs):
+        assert n >= 1, f'{self.name} window n must be at least 1, got {n}'
         self.n = n
-        self._lag = mLag(n)
         super(rDif, self).__init__(
             window=n,
-            schema=Schema([
-                ('dif', Scalar())
-            ]),
+            schema=[
+                ('dif', Box(low=-np.inf, high=np.inf, shape=(), dtype=np.float64))
+            ],
             **kwargs
         )
 
+    def reset_extras(self):
+        pass
+
     def forward(self, values):
-        return values[-1] - self._lag.moving(values[-1])
+        if len(values) < self.n + 1:
+            return np.nan
+        # 返回当前值与 n 个周期前之差
+        return values[-1] - values[-(self.n + 1)]
+
+    @property
+    def full_name(self):
+        return f'{self.name}({self.n})'

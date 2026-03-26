@@ -1,5 +1,5 @@
 import numpy as np
-from ...utils.vector import MovingVector
+from pyta2.utils.vector import MovingVector
 from .base import rZigZagBase
 
 """

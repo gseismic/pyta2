@@ -19,10 +19,10 @@ class TestAPIFunctions:
     
     def test_get_ma_class_invalid_type(self):
         """测试获取无效的移动平均类"""
-        with pytest.raises(KeyError):
+        with pytest.raises(ValueError):
             get_ma_class('INVALID')
         
-        with pytest.raises(KeyError):
+        with pytest.raises(ValueError):
             get_ma_class('')
     
     def test_get_ma_function(self):
@@ -105,10 +105,10 @@ class TestAPIFunctions:
     
     def test_get_ma_window_invalid_type(self):
         """测试获取无效类型的窗口"""
-        with pytest.raises(KeyError):
+        with pytest.raises(ValueError):
             get_ma_window('INVALID', 5)
         
-        with pytest.raises(KeyError):
+        with pytest.raises(ValueError):
             get_ma_window('', 5)
     
     def test_get_ma_window_invalid_period(self):

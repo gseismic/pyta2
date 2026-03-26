@@ -1,5 +1,5 @@
 import numpy as np
-from ...base import forward_rolling_apply
+from pyta2.base import forward_rolling_apply
 from ._rolling_ import rRSI
 
 def RSI(values, n=14, **kwargs):
